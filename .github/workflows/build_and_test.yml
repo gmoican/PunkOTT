@@ -1,4 +1,4 @@
-name: Pamplejuce
+name: PunkOTT multiplatform build
 
 on:
   workflow_dispatch: # lets you run a build from the UI
@@ -134,112 +134,83 @@ jobs:
           dev-id-installer-cert: ${{ secrets.DEV_ID_INSTALLER_CERT }}
           dev-id-installer-password: ${{ secrets.DEV_ID_INSTALLER_PASSWORD }}
 
-      - name: Codesign (macOS)
-        if: ${{ matrix.name == 'macOS' }}
-        timeout-minutes: 5
-        run: |
-          # Each plugin must be code signed
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.VST3_PATH }}" --deep --strict --options=runtime --timestamp
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.AU_PATH }}" --deep --strict --options=runtime --timestamp
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.CLAP_PATH }}" --deep --strict --options=runtime --timestamp
-          codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION}}" -v "${{ env.STANDALONE_PATH }}" --deep --strict --options=runtime --timestamp
+      ### ### ###
+      # This is my workaround to deal with codesign, notarize and staple
 
-      - name: Add Custom Icons (macOS)
+      - name: Zip (macOS)
         if: ${{ matrix.name == 'macOS' }}
         run: |
-          # add the icns as its own icon resource (meta!)
-          sips -i packaging/pamplejuce.icns
+          # workaround for https://github.com/LinusU/node-appdmg/issues/234
+          # python3 -m pip install setuptools
+          # npm install -g appdmg
+          mkdir -p packaging/dmg
+          
+          # Create directories for the dmg symlinks
+          sudo mkdir -m 755 -p /Library/Audio/Plug-Ins/Components && sudo mkdir -m 755 -p /Library/Audio/Plug-Ins/VST3
+          # ln -s /Library/Audio/Plug-Ins/Components "packaging/dmg/Your Mac's Component folder"
+          # ln -s /Library/Audio/Plug-Ins/VST3 "packaging/dmg/Your Mac's VST3 folder"
+          mv "${{ env.VST3_PATH }}" packaging/dmg
+          mv "${{ env.AU_PATH }}" packaging/dmg
+          # mv "${{ env.STANDALONE_PATH }}" packaging/dmg
+          
+          # Create a ZIP and put files into it
+          cd packaging/dmg
+          zip -r "../../${{ env.ARTIFACT_NAME }}.zip" .
 
-          # Grab the resource, put in tempfile
-          DeRez -only icns packaging/pamplejuce.icns > /tmp/icons
-
-          # Stuff the resource into the strange Icon? file's resource fork
-          Rez -a /tmp/icons -o "${{ env.VST3_PATH }}/Icon"$'\r'
-          Rez -a /tmp/icons -o "${{ env.AU_PATH }}/Icon"$'\r'
-          Rez -a /tmp/icons -o "${{ env.CLAP_PATH }}/Icon"$'\r'
-
-          # Set custom icon attribute
-          SetFile -a C "${{ env.VST3_PATH }}"
-          SetFile -a C "${{ env.AU_PATH }}"
-          SetFile -a C "${{ env.CLAP_PATH }}"
-
-      - name: pkgbuild, Productbuild and Notarize
-        if: ${{ matrix.name == 'macOS' }}
-        timeout-minutes: 5
-        run: |
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.au.pkg" --version $VERSION --component "${{ env.AU_PATH }}" --install-location "/Library/Audio/Plug-Ins/Components"  "packaging/${{ env.PRODUCT_NAME }}.au.pkg"
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.vst3.pkg" --version $VERSION --component "${{ env.VST3_PATH }}" --install-location "/Library/Audio/Plug-Ins/VST3" "packaging/${{ env.PRODUCT_NAME }}.vst3.pkg"
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.clap.pkg" --version $VERSION --component "${{ env.CLAP_PATH }}" --install-location "/Library/Audio/Plug-Ins/CLAP" "packaging/${{ env.PRODUCT_NAME }}.clap.pkg"
-
-          # Standalone is special, needs a boolean to always install in /Applications
-          pkgbuild --analyze --root "$(dirname "${{ env.STANDALONE_PATH }}")" standalone.plist
-          plutil -replace BundleIsRelocatable -bool NO standalone.plist
-          pkgbuild --identifier "${{ env.BUNDLE_ID }}.app.pkg" --version $VERSION --root "$(dirname "${{ env.STANDALONE_PATH }}")" --component-plist standalone.plist --install-location "/Applications" "packaging/${{ env.PRODUCT_NAME }}.app.pkg"
-
-          cd packaging
-          envsubst < distribution.xml.template > distribution.xml
-          productbuild --resources ./resources --distribution distribution.xml --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --timestamp "${{ env.ARTIFACT_NAME }}.pkg"
-
-          xcrun notarytool submit "${{ env.ARTIFACT_NAME }}.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
-          xcrun stapler staple "${{ env.ARTIFACT_NAME }}.pkg"
-
-      - name: Zip
+      - name: Zip (Linux)
         if: ${{ matrix.name == 'Linux' }}
         working-directory: ${{ env.ARTIFACTS_PATH }}
-        run: 7z a -tzip "${{ env.ARTIFACT_NAME }}.zip" "-xr!lib${{ env.PRODUCT_NAME }}_SharedCode.a" .
+        run: 7z a -tzip "${{ env.ARTIFACT_NAME }}.zip" .
 
-      - name: Generate Installer
+      - name: Upload VST3 (Windows)
         if: ${{ matrix.name == 'Windows' }}
-        run: |
-          iscc "packaging\installer.iss"
-          mv "packaging/Output/${{ env.ARTIFACT_NAME }}.exe" "${{ env.ARTIFACTS_PATH }}/"
-
-      - name: Codesign with Azure Trusted Signing
-        if: ${{ matrix.name == 'Windows' }}
-        uses: azure/trusted-signing-action@v0.5.1
+        uses: actions/upload-artifact@v3
         with:
-          # The Azure Active Directory tenant (directory) ID.
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-
-          # The client (application) ID of an App Registration in the tenant.
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-
-          # A client secret that was generated for the App Registration.
-          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-          # The Code Signing Account endpoint. The URI value must have a URI that aligns to the region your Code Signing Account and Certificate Profile you are specifying were created in during the setup of these resources.
-          endpoint: ${{ secrets.AZURE_ENDPOINT }}
-
-          # The Code Signing Account name.
-          trusted-signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
-
-          # The Certificate Profile name.
-          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
-
-          # This signs all exes inside the folder
-          files-folder: ${{ env.ARTIFACTS_PATH }}
-          files-folder-filter: exe
-
-      - name: Upload Exe (Windows)
-        if: ${{ matrix.name == 'Windows' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}.exe
-          path: "${{ env.ARTIFACTS_PATH }}/${{ env.ARTIFACT_NAME }}.exe"
+          name: ${{ env.ARTIFACT_NAME }}
+          path: '${{ env.VST3_PATH }}'
 
       - name: Upload Zip (Linux)
         if: ${{ matrix.name == 'Linux' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_NAME }}.zip
-          path: "${{ env.ARTIFACTS_PATH }}/${{ env.ARTIFACT_NAME }}.zip"
+          name: ${{ env.ARTIFACT_NAME }}
+          path: '${{ env.ARTIFACTS_PATH }}/${{ env.ARTIFACT_NAME }}.zip'
 
-      - name: Upload pkg (macOS)
+      - name: Upload Zip (MacOS)
         if: ${{ matrix.name == 'macOS' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.ARTIFACT_NAME }}.pkg
-          path: packaging/${{ env.ARTIFACT_NAME }}.pkg
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_NAME }}.zip
+
+      ### ### ###
+      # This is the original code from the Pamplejuce template
+
+      # - name: Zip
+      #   if: ${{ matrix.name == 'Linux' }}
+      #   working-directory: ${{ env.ARTIFACTS_PATH }}
+      #   run: 7z a -tzip "${{ env.ARTIFACT_NAME }}.zip" "-xr!lib${{ env.PRODUCT_NAME }}_SharedCode.a" .
+      # 
+      # - name: Upload Exe (Windows)
+      #   if: ${{ matrix.name == 'Windows' }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ env.ARTIFACT_NAME }}.exe
+      #     path: "${{ env.ARTIFACTS_PATH }}/${{ env.ARTIFACT_NAME }}.exe"
+      # 
+      # - name: Upload Zip (Linux)
+      #   if: ${{ matrix.name == 'Linux' }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ env.ARTIFACT_NAME }}.zip
+      #     path: "${{ env.ARTIFACTS_PATH }}/${{ env.ARTIFACT_NAME }}.zip"
+      # 
+      # - name: Upload pkg (macOS)
+      #   if: ${{ matrix.name == 'macOS' }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ env.ARTIFACT_NAME }}.pkg
+      #     path: packaging/${{ env.ARTIFACT_NAME }}.pkg
 
   release:
     if: contains(github.ref, 'tags/v')
