@@ -1,5 +1,5 @@
 #pragma once
-#include <PluginProcessor.h>
+#include <PunkOTTProcessor.h>
 
 /* This is a helper function to run tests within the context of a plugin editor.
  *
@@ -19,9 +19,9 @@
    });
 
  */
-[[maybe_unused]] static void runWithinPluginEditor (const std::function<void (PluginProcessor& plugin)>& testCode)
+[[maybe_unused]] static void runWithinPluginEditor (const std::function<void (PunkOTTProcessor& plugin)>& testCode)
 {
-    PluginProcessor plugin;
+    PunkOTTProcessor plugin;
     const auto editor = plugin.createEditorIfNeeded();
 
     testCode (plugin);

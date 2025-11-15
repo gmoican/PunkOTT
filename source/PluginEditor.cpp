@@ -1,6 +1,6 @@
 #include "PluginEditor.h"
 
-PluginEditor::PluginEditor (PluginProcessor& p)
+PluginEditor::PluginEditor (PunkOTTProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     juce::ignoreUnused (processorRef);
