@@ -36,7 +36,7 @@ namespace Parameters
     // Range: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto rangeId = "range";
     constexpr auto rangeName = "Range (dB)";
-    constexpr auto rangeDefault = -20.f;
+    constexpr auto rangeDefault = 12.f;
 
     // Attack/Release: Time constants for the dynamics
     constexpr auto attackId = "attack";
@@ -86,14 +86,25 @@ public:
     // Public method to access the parameter state for the Editor (GUI)
     juce::AudioProcessorValueTreeState& getValueTreeState() { return apvts; }
     
-    // Updaters
-    void updateOnOff();
-    void updateBoost();
-    void updateCharacter();
-    void updateEq();
-    void updateState();
+    // Current DSP-ready parameter values
+    struct PluginParameters
+    {
+        // Utilities
+        float inGain = 1.0f;
+        float gateThres = 0.0f;
+        float wetMix = 1.0f;
+        float outGain = 1.0f;
+        
+        // OTT
+        float rangeLinear = 1.0f;
+        float downAmount = 0.5f;
+        float attackCoeff = 0.0f;
+        float releaseCoeff = 0.0f;
+    };
     
-    void process(float* samples, int numSamples);
+    PluginParameters currentParameters;
+    
+    void updateParameters();
 
 private:
     juce::AudioProcessorValueTreeState apvts;

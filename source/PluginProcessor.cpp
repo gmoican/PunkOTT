@@ -203,11 +203,56 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
 }
 
 //==============================================================================
+void PunkOTTProcessor::updateParameters()
+{
+    // TODO: For final version, this function should only be called when parameters actually move -> APVTS::addParameterListener
+    // --- 1. Utilities
+    const float inLeveldB = apvts.getRawParameterValue(Parameters::inId)->load();
+    currentParameters.inGain = juce::Decibels::decibelsToGain(inLeveldB);
+    
+    const float outLeveldB = apvts.getRawParameterValue(Parameters::gateId)->load();
+    currentParameters.inGain = juce::Decibels::decibelsToGain(outLeveldB);
+    
+    const float gateThres = apvts.getRawParameterValue(Parameters::outId)->load();
+    currentParameters.inGain = juce::Decibels::decibelsToGain(gateThres);
+    
+    const float mixPercent = apvts.getRawParameterValue(Parameters::mixId)->load();
+    currentParameters.inGain = mixPercent / 100.0f;
+    
+    // --- 2. OTT
+    const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
+    currentParameters.rangeLinear = juce::Decibels::decibelsToGain(rangedB);
+    
+    currentParameters.downAmount = apvts.getRawParameterValue(Parameters::amountId)->load();
+    
+    const double sampleRate = getSampleRate();
+    if (sampleRate > 0)
+    {
+        const float attackMS = apvts.getRawParameterValue(Parameters::attackId)->load();
+        const float releasMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
+        
+        // 1-pole filter coefficient calculation (alpha = e^(-1 / (sampleRate * time_in_seconds)))
+        // We use -1.0f/tau as the exponent for the exponential smoothing factor.
+        currentParameters.attackCoeff = std::exp(-1.0f / (sampleRate * (attackMS / 1000.0f)));
+        currentParameters.releaseCoeff = std::exp(-1.0f / (sampleRate * (releasMS / 1000.0f)));
+    } else
+    {
+        // Safety measure ( should not happen after prepareToPlay)
+        currentParameters.attackCoeff = 0.0f;
+        currentParameters.releaseCoeff = 0.0f;
+    }
+}
+
 void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    juce::ignoreUnused(sampleRate);
+    
+    compressedBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock);
+    compressedBuffer.clear();
+    
+    std::fill(envelope.begin(), envelope.end(), 1.0f);
+    
+    updateParameters();
 }
 
 void PunkOTTProcessor::releaseResources()
@@ -247,26 +292,123 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+    // Clear any unused output channel
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    // Safety check: compressedBuffer is ready
+    if (compressedBuffer.getNumSamples() != buffer.getNumSamples())
+        compressedBuffer.setSize(totalNumOutputChannels, buffer.getNumSamples());
+    
+    compressedBuffer.clear();
+    
+    // Update params - TODO: this has to be triggered by a listener in the final version
+    updateParameters();
+    
+    // Cache the parameters
+    const float inGain = currentParameters.inGain;
+    const float gateThres = currentParameters.gateThres;
+    const float wetMix = currentParameters.wetMix;
+    const float outGain = currentParameters.outGain;
+    const float rangeLinear = currentParameters.rangeLinear;
+    const float downAmount = currentParameters.downAmount;
+    const float attackCoeff = currentParameters.attackCoeff;
+    const float releaseCoeff = currentParameters.releaseCoeff;
+    
+    // Fixed threshold for downward compression (0 dBFS / 1.0 linear)
+    const float downThreshold = 1.0f;
+    
+    // Calculate the Downward Compression Ratio based on Amount (0.0 to 1.0)
+    // Example: Ratio goes from 1:1 to 8:1 (or higher, very aggressive)
+    const float maxRatio = 8.0f;
+    const float ratio = 1.0f + downAmount * (maxRatio - 1.0f);
+    
+    // Core processing
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
+        float* compressedData = compressedBuffer.getWritePointer(channel);
+        float currentEnvelope = envelope[channel];
+        
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            float inSample = channelData[sample];
+            
+            // 1. UTILITIES - PRE-OTT
+            float processedSample = inSample * inGain;
+            
+            if (std::abs(processedSample) < gateThres)
+                processedSample = 0.0f;
+            
+            // Store the processed sample back temporarily (it will be overwritten later)
+            // We use the temporary buffer for the WET signal calculation:
+            float magnitude = std::abs (processedSample);
+            
+            // 2. OTT
+            float G_up = 1.0f;    // Upward Gain Component
+            float G_down = 1.0f;  // Downward Gain Component
+
+            // 1. UPWARD COMPRESSION LOGIC (Boosting quiet signals)
+            if (magnitude < rangeLinear)
+            {
+                // Gain to push the signal up to the Range threshold
+                G_up = rangeLinear / magnitude;
+            }
+
+            // 2. DOWNWARD COMPRESSION LOGIC (Limiting loud signals)
+            if (magnitude > downThreshold)
+            {
+                // Calculate the amount signal is above threshold (in linear)
+                float excursion = magnitude - downThreshold;
+                
+                // G = Threshold + (Excursion / Ratio) -> Attenuation needed for peak
+                // The linear gain reduction factor:
+                // G_down is 1.0 (no reduction) if ratio=1, and smaller if ratio > 1
+                G_down = downThreshold + (excursion / ratio);
+                G_down = downThreshold / G_down; // Convert magnitude scaling back to VCA gain
+            }
+            
+            // 3. COMBINED TARGET GAIN & SMOOTHING
+            const float targetGain = G_up * G_down;
+
+            // Attack/Release decision logic
+            float alpha = (targetGain > currentEnvelope) ? attackCoeff : releaseCoeff;
+
+            // Simple 1-pole filter to smooth the applied gain
+            currentEnvelope = (alpha * currentEnvelope) + ((1.0f - alpha) * targetGain);
+            
+            // Apply smoothed gain to the sample
+            compressedData[sample] = processedSample * currentEnvelope;
+        }
+        
+        // Store the final envelope for the start of the next block
+        envelope[channel] = currentEnvelope;
+    }
+    
+    // 3. UTILITIES - POST-OTT
+    const float dryMix = 1.0f - wetMix;
+    
+    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    {
+        float* channelData = buffer.getWritePointer (channel);
+        const float* compressedData = compressedBuffer.getReadPointer(channel);
+
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            // Original dry sample (after Input Gain and Gate, but before Dynamics Core)
+            const float drySample = channelData[sample];
+            
+            // Compressed wet sample
+            const float wetSample = compressedData[sample];
+            
+            // C. MIX & OUTPUT STAGE
+            
+            // Apply Mix (Parallel Processing)
+            float mixedSample = (wetSample * wetMix) + (drySample * dryMix);
+
+            // Apply Output Level
+            channelData[sample] = mixedSample * outGain;
+        }
     }
 }
 
