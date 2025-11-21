@@ -1,5 +1,8 @@
 name: PunkOTT build
 
+env:
+  project_name: PunkOTT
+
 on:
   push:
     branches:
