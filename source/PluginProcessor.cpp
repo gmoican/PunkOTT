@@ -211,13 +211,13 @@ void PunkOTTProcessor::updateParameters()
     currentParameters.inGain = juce::Decibels::decibelsToGain(inLeveldB);
     
     const float outLeveldB = apvts.getRawParameterValue(Parameters::gateId)->load();
-    currentParameters.inGain = juce::Decibels::decibelsToGain(outLeveldB);
+    currentParameters.gateThres = juce::Decibels::decibelsToGain(outLeveldB);
     
     const float gateThres = apvts.getRawParameterValue(Parameters::outId)->load();
-    currentParameters.inGain = juce::Decibels::decibelsToGain(gateThres);
+    currentParameters.outGain = juce::Decibels::decibelsToGain(gateThres);
     
     const float mixPercent = apvts.getRawParameterValue(Parameters::mixId)->load();
-    currentParameters.inGain = mixPercent / 100.0f;
+    currentParameters.wetMix = mixPercent / 100.0f;
     
     // --- 2. OTT
     const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
@@ -229,12 +229,12 @@ void PunkOTTProcessor::updateParameters()
     if (sampleRate > 0)
     {
         const float attackMS = apvts.getRawParameterValue(Parameters::attackId)->load();
-        const float releasMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
+        const float releaseMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
         
         // 1-pole filter coefficient calculation (alpha = e^(-1 / (sampleRate * time_in_seconds)))
         // We use -1.0f/tau as the exponent for the exponential smoothing factor.
         currentParameters.attackCoeff = std::exp(-1.0f / (sampleRate * (attackMS / 1000.0f)));
-        currentParameters.releaseCoeff = std::exp(-1.0f / (sampleRate * (releasMS / 1000.0f)));
+        currentParameters.releaseCoeff = std::exp(-1.0f / (sampleRate * (releaseMS / 1000.0f)));
     } else
     {
         // Safety measure ( should not happen after prepareToPlay)
@@ -328,7 +328,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     {
         auto* channelData = buffer.getWritePointer (channel);
         float* compressedData = compressedBuffer.getWritePointer(channel);
-        float currentEnvelope = envelope[channel];
+        auto currentEnvelope = envelope[channel];
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
@@ -337,9 +337,11 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             // 1. UTILITIES - PRE-OTT
             float processedSample = inSample * inGain;
             
+            // TODO: Implement better noise gate
             if (std::abs(processedSample) < gateThres)
                 processedSample = 0.0f;
             
+            /*
             // Store the processed sample back temporarily (it will be overwritten later)
             // We use the temporary buffer for the WET signal calculation:
             float magnitude = std::abs (processedSample);
@@ -379,36 +381,14 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             
             // Apply smoothed gain to the sample
             compressedData[sample] = processedSample * currentEnvelope;
+             */
+            
+            // 3. UTILITIES - POST-OTT
+            channelData[sample] = (processedSample * wetMix + inSample * (1.f - wetMix)) * outGain;
         }
         
         // Store the final envelope for the start of the next block
         envelope[channel] = currentEnvelope;
-    }
-    
-    // 3. UTILITIES - POST-OTT
-    const float dryMix = 1.0f - wetMix;
-    
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        float* channelData = buffer.getWritePointer (channel);
-        const float* compressedData = compressedBuffer.getReadPointer(channel);
-
-        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-        {
-            // Original dry sample (after Input Gain and Gate, but before Dynamics Core)
-            const float drySample = channelData[sample];
-            
-            // Compressed wet sample
-            const float wetSample = compressedData[sample];
-            
-            // C. MIX & OUTPUT STAGE
-            
-            // Apply Mix (Parallel Processing)
-            float mixedSample = (wetSample * wetMix) + (drySample * dryMix);
-
-            // Apply Output Level
-            channelData[sample] = mixedSample * outGain;
-        }
     }
 }
 
