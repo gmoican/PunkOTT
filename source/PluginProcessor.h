@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 // #include <juce_dsp/juce_dsp.h>
+#include "Compressor.h"
 
 #if (MSVC)
 #include "ipps.h"
@@ -9,7 +10,7 @@
 
 namespace Parameters
 {
-    // ======= UTILITIES PARAMETERS ========
+    // ======= UTILITY PARAMETERS ========
     constexpr auto inId = "in_gain";
     constexpr auto inName = "Input Gain (dB)";
     constexpr auto inDefault = 0.f;
@@ -28,10 +29,9 @@ namespace Parameters
 
     // ========== OTT PARAMETERS ===========
     // Comp: Determines the ceiling (in dB) for high-level signals to be compressed down
-    // Amount:
-    constexpr auto amountId = "comp";
-    constexpr auto amountName = "Comp (dB)";
-    constexpr auto amountDefault = 0.5f;
+    constexpr auto compThresId = "comp";
+    constexpr auto compThresName = "Comp Threshold (dB)";
+    constexpr auto compThresDefault = -6.0f;
 
     // Range: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto rangeId = "range";
@@ -42,7 +42,6 @@ namespace Parameters
     constexpr auto attackId = "attack";
     constexpr auto attackName = "Attack (ms)";
     constexpr auto attackDefault = 10.f;
-
 
     constexpr auto releaseId = "release";
     constexpr auto releaseName = "Release (ms)";
@@ -86,44 +85,34 @@ public:
     // Public method to access the parameter state for the Editor (GUI)
     juce::AudioProcessorValueTreeState& getValueTreeState() { return apvts; }
     
-    // Current DSP-ready parameter values
-    struct PluginParameters
-    {
-        // Utilities
-        float inGain = 1.0f;
-        float gateThres = 0.0f;
-        float wetMix = 1.0f;
-        float outGain = 1.0f;
-        
-        // OTT
-        float rangeLinear = 1.0f;
-        float downAmount = 0.5f;
-        float attackCoeff = 0.0f;
-        float releaseCoeff = 0.0f;
-    };
-    
-    PluginParameters currentParameters;
-    
     void updateParameters();
 
 private:
     juce::AudioProcessorValueTreeState apvts;
     juce::AudioProcessorValueTreeState::ParameterLayout createParams();
     
-    // using Gain = juce::dsp::Gain<float>;
-    
-    // Gain inLevel, outLevel;
-    
+    // TODO: Should I use this clipper in the end of the chain ???
     static float softClipper(float sample)
     {
         return 2.f * sample / (abs(sample) + 1.f);
     }
+    // --- INTERNAL PARAMETER HANDLING ---
+    // Utilities
+    float inGain = 1.0f;
+    float gateThres = 0.0f;
+    float wetMix = 1.0f;
+    float outGain = 1.0f;
     
-    // 2. State Variables for DSP (must be reset in prepareToPlay)
-
-    // Envelope for smoothing the applied gain (one per channel).
-    // This retains the gain value across processBlock calls.
-    std::array<float, 2> envelope { 1.0f, 1.0f }; // Initialized to 1.0 (0 dB gain)
+    // Dynamics
+    float rangeLinear = 1.0f;
+    float compThresdB = 0.5f;
+    float attackCoeff = 0.0f;
+    float releaseCoeff = 0.0f;
+    
+    // --- PROCESSORS ---
+    // Gate gate;
+    // Lifter lifter;
+    Compressor compressor;
 
     // Temporary storage for the wet (compressed) signal.
     // Needed to calculate the wet/dry mix using the dry signal from the input buffer.
