@@ -149,7 +149,20 @@ void Compressor::processFB(juce::AudioBuffer<float>& processedBuffer)
             const float outputDB = juce::Decibels::gainToDecibels(magnitude);
             
             // 3. TARGET GAIN REDUCTION COMPUTATION (In dB)
-            float targetGR_dB = (outputDB > thresdB) ? (outputDB - thresdB) * compressionSlope : 0.0f;
+            // Hard knee equation
+            // float targetGR_dB = (outputDB > thresdB) ? (outputDB - thresdB) * compressionSlope : 0.0f;
+            
+            // Soft Knee Equation
+            float targetGR_dB = 0.0f;
+            if (outputDB > kneeEnd)
+            {
+                targetGR_dB = (outputDB - thresdB) * compressionSlope;
+            }
+            else if (outputDB > kneeStart)
+            {
+                const float x = outputDB - kneeStart;
+                targetGR_dB = compressionSlope / (2.0f * kneedB) * (x * x);
+            }
             
             // 4. ENVELOPE SMOOTHING (In dB Domain)
             float alpha = (targetGR_dB > -currentGR_dB) ? attackCoeff : releaseCoeff;
