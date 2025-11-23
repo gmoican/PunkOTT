@@ -103,11 +103,11 @@ private:
     float wetMix = 1.0f;
     float outGain = 1.0f;
     
-    // Dynamics
-    float rangeLinear = 1.0f;
-    float compThresdB = 0.5f;
-    float attackCoeff = 0.0f;
-    float releaseCoeff = 0.0f;
+    // // Dynamics
+    // float rangeLinear = 1.0f;
+    // float compThresdB = 0.5f;
+    // float attackCoeff = 0.0f;
+    // float releaseCoeff = 0.0f;
     
     // --- PROCESSORS ---
     // Gate gate;

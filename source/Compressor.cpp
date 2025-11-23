@@ -14,7 +14,6 @@ void Compressor::prepare(double sampleRate, int totalNumChannels)
 
     // Resize the envelope vector to match the channel count
     envelope.assign(totalNumChannels, 1.0f); // Initialize gain to 1.0 (0 dB)
-    // currentParams = {}; 
 }
 
 void Compressor::update(float thresLin, float attCoeff, float relCoeff)

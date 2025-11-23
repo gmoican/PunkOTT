@@ -12,17 +12,6 @@
 class Compressor
 {
 public:
-    // // --- DSP-ready Parameter Struct ---
-    // // Note: The processor is responsible for converting ms to coefficients and
-    // // dB values to linear scale before passing them here.
-    // struct CompParams
-    // {
-    //     float ratio = 4.0f;             // Linear ratio (e.g., 4.0 for 4:1)
-    //     float thresholdLinear = 0.25f;  // Linear threshold (e.g., 0.25 for -12 dBFS)
-    //     float attackCoeff = 0.0f;       // Smoothing coefficient (Attack)
-    //     float releaseCoeff = 0.0f;      // Smoothing coefficient (Release)
-    // };
-
     Compressor();
     ~Compressor() = default;
 
@@ -39,8 +28,7 @@ public:
 
 private:
     // --- Internal State ---
-    std::vector<float> envelope; // Stores the current applied linear gain factor
-    // CompParams currentParams;
+    std::vector<float> envelope;    // Stores the current applied linear gain factor
     float ratio = 4.0f;             // Linear ratio (e.g., 4.0 for 4:1)
     float thresholdLinear = 0.25f;  // Linear threshold (e.g., 0.25 for -12 dBFS)
     float attackCoeff = 0.0f;       // Smoothing coefficient (Attack)

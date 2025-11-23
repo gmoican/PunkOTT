@@ -141,7 +141,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                                                                          " | "          // Separator string for hosts that flatten the hierarchy
                                                                          );
     
-    // Range (Upward)
+    // Range (Upward) -> TODO: Not yet developed, range should be adjusted
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::rangeId,
                                                                    Parameters::rangeName,
@@ -194,26 +194,27 @@ void PunkOTTProcessor::updateParameters()
     const float inLeveldB = apvts.getRawParameterValue(Parameters::inId)->load();
     inGain = juce::Decibels::decibelsToGain(inLeveldB);
     
-    const float outLeveldB = apvts.getRawParameterValue(Parameters::gateId)->load();
-    gateThres = juce::Decibels::decibelsToGain(outLeveldB);
-    
-    const float gateThres = apvts.getRawParameterValue(Parameters::outId)->load();
-    outGain = juce::Decibels::decibelsToGain(gateThres);
+    const float gatedB = apvts.getRawParameterValue(Parameters::gateId)->load();
+    gateThres = juce::Decibels::decibelsToGain(gatedB);
     
     const float mixPercent = apvts.getRawParameterValue(Parameters::mixId)->load();
     wetMix = mixPercent / 100.0f;
     
+    const float outdB = apvts.getRawParameterValue(Parameters::outId)->load();
+    outGain = juce::Decibels::decibelsToGain(outdB);
+    
     // --- 2. OTT
-    double sampleRate = getSampleRate();
+    float sampleRate = (float) getSampleRate();
     const float thresLin = apvts.getRawParameterValue(Parameters::compThresId)->load();
     const float attackMS = apvts.getRawParameterValue(Parameters::attackId)->load();
     const float releaseMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
     
     // 1-pole filter coefficient calculation (alpha = e^(-1 / (sampleRate * time_in_seconds)))
     // We use -1.0f/tau as the exponent for the exponential smoothing factor.
-    auto attCoeff = std::exp(-1.0f / (sampleRate * (attackMS / 1000.0f)));
-    auto relCoeff = std::exp(-1.0f / (sampleRate * (releaseMS / 1000.0f)));
+    float attCoeff = std::exp(-1.0f / (sampleRate * (attackMS / 1000.0f)));
+    float relCoeff = std::exp(-1.0f / (sampleRate * (releaseMS / 1000.0f)));
     
+    // lifter.update(rangeLin, attCoeff, relCoeff);
     compressor.update(thresLin, attCoeff, relCoeff);
     
     // // TODO: Fix when Lifter is ready
@@ -225,6 +226,7 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     juce::ignoreUnused(sampleRate);
     
+    // TODO: Un-comment when processor are ready
     // gate.prepare(sampleRate, samplesPerBlock);
     // lifter.prepare(sampleRate, samplesPerBlock);
     compressor.prepare(sampleRate, samplesPerBlock);
@@ -292,6 +294,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // TODO: NOISE GATE HERE
     
     //2. OTT
+    // TODO: LIFTER HERE
     compressor.process(compressedBuffer);
     
     // 3. UTILITIES - POST-OTT
@@ -301,71 +304,6 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.addFrom(i, 0, compressedBuffer, i, 0, buffer.getNumSamples());
     
     buffer.applyGain(outGain);
-    
-    // // Core processing
-    // for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    // {
-    //     auto* channelData = buffer.getWritePointer (channel);
-    //     float* compressedData = compressedBuffer.getWritePointer(channel);
-    //     auto currentEnvelope = envelope[channel];
-    //
-    //     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-    //     {
-    //         float inSample = channelData[sample];
-    //
-    //         // 1. UTILITIES - PRE-OTT
-    //         float processedSample = inSample * inGain;
-    //
-    //         // TODO: Implement better noise gate
-    //         if (std::abs(processedSample) < gateThres)
-    //             processedSample = 0.0f;
-            
-    //         /*
-    //         // Store the processed sample back temporarily (it will be overwritten later)
-    //         // We use the temporary buffer for the WET signal calculation:
-    //         float magnitude = std::abs (processedSample);
-    //
-    //         // 2. OTT
-    //         float G_up = 1.0f;    // Upward Gain Component
-    //         float G_down = 1.0f;  // Downward Gain Component
-    //
-    //         // 1. UPWARD COMPRESSION LOGIC (Boosting quiet signals)
-    //         if (magnitude < rangeLinear)
-    //         {
-    //             // Gain to push the signal up to the Range threshold
-    //             G_up = rangeLinear / magnitude;
-    //         }
-    //
-    //         // 2. DOWNWARD COMPRESSION LOGIC (Limiting loud signals)
-    //         if (magnitude > downThreshold)
-    //         {
-    //             // Calculate the amount signal is above threshold (in linear)
-    //             float excursion = magnitude - downThreshold;
-    //
-    //             // G = Threshold + (Excursion / Ratio) -> Attenuation needed for peak
-    //             // The linear gain reduction factor:
-    //             // G_down is 1.0 (no reduction) if ratio=1, and smaller if ratio > 1
-    //             G_down = downThreshold + (excursion / ratio);
-    //             G_down = downThreshold / G_down; // Convert magnitude scaling back to VCA gain
-    //         }
-            
-    //         // 3. COMBINED TARGET GAIN & SMOOTHING
-    //         const float targetGain = G_up * G_down;
-    //
-    //         // Attack/Release decision logic
-    //         float alpha = (targetGain > currentEnvelope) ? attackCoeff : releaseCoeff;
-    //
-    //         // Simple 1-pole filter to smooth the applied gain
-    //         currentEnvelope = (alpha * currentEnvelope) + ((1.0f - alpha) * targetGain);
-    //
-    //         // Apply smoothed gain to the sample
-    //         compressedData[sample] = processedSample * currentEnvelope;
-    //          */
-    //
-    //         // 3. UTILITIES - POST-OTT
-    //         channelData[sample] = (processedSample * wetMix + inSample * (1.f - wetMix)) * outGain;
-    //     }
-    // }
 }
 
 //==============================================================================
