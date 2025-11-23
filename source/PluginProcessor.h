@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 // #include <juce_dsp/juce_dsp.h>
 #include "Compressor.h"
+#include "Clipper.h"
 
 #if (MSVC)
 #include "ipps.h"
@@ -46,6 +47,11 @@ namespace Parameters
     constexpr auto releaseId = "release";
     constexpr auto releaseName = "Release (ms)";
     constexpr auto releaseDefault = 100.f;
+
+    // Clipper: Applies a soft-clipping function after the dynamics processing
+    constexpr auto clipperId = "clipper";
+    constexpr auto clipperName = "Clipper";
+    constexpr auto clipperDefault = false;
 }
 
 class PunkOTTProcessor : public juce::AudioProcessor
@@ -107,8 +113,12 @@ private:
 
     // --- PROCESSORS ---
     // Gate gate;
+    
     // Lifter lifter;
     Compressor compressor;
+    
+    Clipper clipper;
+    bool clipperState = false;
 
     // Temporary storage for the wet (compressed) signal.
     // Needed to calculate the wet/dry mix using the dry signal from the input buffer.

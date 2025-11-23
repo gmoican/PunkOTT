@@ -151,7 +151,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                        
                        );
     
-    // Compressor Threshold (dB) -> Gets turned to linear in the updater
+    // Compressor Threshold (dB)
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::compThresId,
                                                                    Parameters::compThresName,
@@ -179,6 +179,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                                                                    Parameters::releaseDefault
                                                                    )
                        
+                       );
+    
+    // Clipper
+    dynGroup->addChild(std::make_unique<juce::AudioParameterBool>(Parameters::clipperId,
+                                                                 Parameters::clipperName,
+                                                                 Parameters::clipperDefault
+                                                                 )
                        );
     
     layout.add(std::move(dynGroup));
@@ -220,6 +227,8 @@ void PunkOTTProcessor::updateParameters()
     compressor.updateThres(thresdB);
     compressor.updateAttack(attCoeff);
     compressor.updateRelease(relCoeff);
+    
+    clipperState = apvts.getRawParameterValue(Parameters::clipperId)->load();
 }
 
 void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -296,6 +305,9 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //2. OTT
     // TODO: LIFTER HERE
     compressor.processFF(compressedBuffer);
+    if (clipperState) {
+        clipper.applySoftClipper(compressedBuffer);
+    }
     
     // 3. UTILITIES - POST-OTT
     compressedBuffer.applyGain(wetMix);
