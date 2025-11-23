@@ -214,12 +214,12 @@ void PunkOTTProcessor::updateParameters()
     float attCoeff = std::exp(-1.0f / (sampleRate * (attackMS / 1000.0f)));
     float relCoeff = std::exp(-1.0f / (sampleRate * (releaseMS / 1000.0f)));
     
-    // lifter.update(rangeLin, attCoeff, relCoeff);
-    compressor.update(thresdB, attCoeff, relCoeff);
-    
-    // // TODO: Fix when Lifter is ready
-    // const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
-    // currentParameters.rangeLinear = juce::Decibels::decibelsToGain(rangedB);
+    // lifter.updateRange(rangedB);
+    // lifter.updateAttack(attCoeff);
+    // lifter.updateRelease(relCoeff);
+    compressor.updateThres(thresdB);
+    compressor.updateAttack(attCoeff);
+    compressor.updateRelease(relCoeff);
 }
 
 void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -295,7 +295,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     
     //2. OTT
     // TODO: LIFTER HERE
-    compressor.process(compressedBuffer);
+    compressor.processFF(compressedBuffer);
     
     // 3. UTILITIES - POST-OTT
     compressedBuffer.applyGain(wetMix);
