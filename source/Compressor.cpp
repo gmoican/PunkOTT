@@ -1,7 +1,8 @@
 #include "Compressor.h"
 
 // Define a floor for magnitude detection to prevent log(0) and instability.
-static constexpr float minMagnitude = 0.00001f; // Approx -100 dB
+static constexpr float minMagnitude = 0.00001f;     // Approx -100 dB
+static constexpr float makeUpGainLinear = 1.0f;     // Approx +12dB
 
 Compressor::Compressor()
 {
@@ -13,14 +14,14 @@ void Compressor::prepare(double sampleRate, int totalNumChannels)
     juce::ignoreUnused(sampleRate);
 
     // Resize the envelope vector to match the channel count
-    envelope.assign(totalNumChannels, 1.0f); // Initialize gain to 1.0 (0 dB)
+    envelope.assign(totalNumChannels, 0.0f); // Initialize gain to 0 dB
 }
 
-void Compressor::update(float thresLin, float attCoeff, float relCoeff)
+void Compressor::update(float newThresdB, float newAttCoeff, float newRelCoeff)
 {
-    thresholdLinear = thresLin;
-    attackCoeff = attCoeff;
-    releaseCoeff = relCoeff;
+    thresdB = newThresdB;
+    attackCoeff = newAttCoeff;
+    releaseCoeff = newRelCoeff;
 }
 
 void Compressor::process(juce::AudioBuffer<float>& processedBuffer)
@@ -29,27 +30,22 @@ void Compressor::process(juce::AudioBuffer<float>& processedBuffer)
     const int numChannels = processedBuffer.getNumChannels();
     
     // --- Pre-calculations ---
-    
-    // Calculate the threshold in dB for the sidechain analysis
-    const float thresholdDB = juce::Decibels::gainToDecibels(thresholdLinear);
-    
     // Calculate the slope for gain reduction: 1 - (1 / Ratio)
-    // Example: Ratio=4 (4:1) -> slope = 1 - 0.25 = 0.75
     const float compressionSlope = 1.0f - (1.0f / ratio); 
     
     // Ensure envelope vector is correctly sized (safety)
     if ((int)envelope.size() != numChannels)
-        envelope.assign(numChannels, 1.0f);
+        envelope.assign(numChannels, 0.0f);
 
     
     for (int channel = 0; channel < numChannels; ++channel)
     {
         float* channelData = processedBuffer.getWritePointer(channel);
-        float currentEnvelope = envelope[channel]; 
+        float currentGR_dB = envelope[channel]; 
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            float inputSample = channelData[sample]; 
+            float inputSample = channelData[sample];
             float magnitude = std::abs (inputSample);
             
             // Clamp magnitude to prevent log(0)
@@ -58,23 +54,21 @@ void Compressor::process(juce::AudioBuffer<float>& processedBuffer)
             // 1. SIDECHAIN: Convert magnitude to dB
             const float inputDB = juce::Decibels::gainToDecibels(magnitude);
 
-            // 2. GAIN COMPUTATION (In dB)
-            float gainReductionDB = (inputDB > thresholdDB) ? ((inputDB - thresholdDB) * compressionSlope) : 0.0f;
+            // 2. TARGET GAIN REDUCTION (in dB)
+            float targetGR_dB = (inputDB > thresdB) ? (inputDB - thresdB) * compressionSlope : 0.0f;
             
-            // 3. TARGET GAIN (In Linear)
-            // Convert gain reduction (positive dB) back to a linear gain factor (0.0 to 1.0)
-            const float targetGain = juce::Decibels::decibelsToGain(-gainReductionDB);
+            // 3. ENVELOPE SMOOTHING (in dB)
+            float alpha = (targetGR_dB > -currentGR_dB) ? attackCoeff : releaseCoeff;
             
-            // 4. ENVELOPE SMOOTHING
-            float alpha = (targetGain < currentEnvelope) ? attackCoeff : releaseCoeff;
-
-            currentEnvelope = (alpha * currentEnvelope) + ((1.0f - alpha) * targetGain);
+            const float smoothedReductionAmount = (alpha * -currentGR_dB) + ((1.0f - alpha) * targetGR_dB);
+            currentGR_dB = -smoothedReductionAmount;
             
-            // 5. APPLY GAIN (in-place)
-            channelData[sample] = inputSample * currentEnvelope;
+            // 4. APPLY GAIN (in-place)
+            const float gainReductionLinear = juce::Decibels::decibelsToGain(currentGR_dB);
+            channelData[sample] = inputSample * gainReductionLinear * makeUpGainLinear;
         }
 
         // Store the final envelope value for the start of the next block
-        envelope[channel] = currentEnvelope; 
+        envelope[channel] = currentGR_dB;
     }
 }

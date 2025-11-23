@@ -30,7 +30,7 @@ private:
     // --- Internal State ---
     std::vector<float> envelope;    // Stores the current applied linear gain factor
     float ratio = 4.0f;             // Linear ratio (e.g., 4.0 for 4:1)
-    float thresholdLinear = 0.25f;  // Linear threshold (e.g., 0.25 for -12 dBFS)
+    float thresdB = -12.0f;          // Threshold in dB
     float attackCoeff = 0.0f;       // Smoothing coefficient (Attack)
     float releaseCoeff = 0.0f;      // Smoothing coefficient (Release)
 

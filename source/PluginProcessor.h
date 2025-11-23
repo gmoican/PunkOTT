@@ -31,7 +31,7 @@ namespace Parameters
     // Comp: Determines the ceiling (in dB) for high-level signals to be compressed down
     constexpr auto compThresId = "comp";
     constexpr auto compThresName = "Comp Threshold (dB)";
-    constexpr auto compThresDefault = -6.0f;
+    constexpr auto compThresDefault = -12.0f;
 
     // Range: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto rangeId = "range";
@@ -103,12 +103,8 @@ private:
     float wetMix = 1.0f;
     float outGain = 1.0f;
     
-    // // Dynamics
-    // float rangeLinear = 1.0f;
-    // float compThresdB = 0.5f;
-    // float attackCoeff = 0.0f;
-    // float releaseCoeff = 0.0f;
-    
+    // Dynamics parameters are handled inside their own classes
+
     // --- PROCESSORS ---
     // Gate gate;
     // Lifter lifter;

@@ -155,7 +155,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::compThresId,
                                                                    Parameters::compThresName,
-                                                                   juce::NormalisableRange<float>(-18.0f, 0.0f, 0.1f),
+                                                                   juce::NormalisableRange<float>(-24.0f, 0.0f, 0.1f),
                                                                    Parameters::compThresDefault
                                                                    )
                        
@@ -205,7 +205,7 @@ void PunkOTTProcessor::updateParameters()
     
     // --- 2. OTT
     float sampleRate = (float) getSampleRate();
-    const float thresLin = apvts.getRawParameterValue(Parameters::compThresId)->load();
+    const float thresdB = apvts.getRawParameterValue(Parameters::compThresId)->load();
     const float attackMS = apvts.getRawParameterValue(Parameters::attackId)->load();
     const float releaseMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
     
@@ -215,7 +215,7 @@ void PunkOTTProcessor::updateParameters()
     float relCoeff = std::exp(-1.0f / (sampleRate * (releaseMS / 1000.0f)));
     
     // lifter.update(rangeLin, attCoeff, relCoeff);
-    compressor.update(thresLin, attCoeff, relCoeff);
+    compressor.update(thresdB, attCoeff, relCoeff);
     
     // // TODO: Fix when Lifter is ready
     // const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
