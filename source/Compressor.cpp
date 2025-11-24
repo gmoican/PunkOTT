@@ -123,6 +123,8 @@ void Compressor::processFB(juce::AudioBuffer<float>& processedBuffer)
     // --- Pre-calculations ---
     // Calculate the slope for gain reduction: 1 - (1 / Ratio)
     const float compressionSlope = 1.0f - (1.0f / ratio);
+    const float kneeStart = thresdB - (kneedB / 2.0f);
+    const float kneeEnd = thresdB + (kneedB / 2.0f);
     
     // Ensure envelope vector is correctly sized (safety)
     if ((int)envelope.size() != numChannels)
