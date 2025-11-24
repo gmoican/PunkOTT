@@ -2,9 +2,6 @@
 
 // Define a small constant to prevent division by zero near the noise floor.
 static constexpr float minMagnitude = 0.00001f; // Approx -100 dB
-// Define the maximum gain factor for the upward compression stage.
-// 10.0f = +20 dB boost. This prevents runaway gain and instability.
-static constexpr float maxUpwardGain = 10.0f;
 
 Lifter::Lifter()
 {
@@ -16,36 +13,50 @@ void Lifter::prepare(double sampleRate, int totalNumChannels)
     juce::ignoreUnused(sampleRate);
     
     // Resize the envelope vector to match the channel count
-    envelope.assign(totalNumChannels, 1.0f); // Initialize gain to 1.0 (0 dB)
-
-    // Reset parameters on prepare to ensure no stale coefficients are used
-    currentParams = {}; 
+    envelope.assign(totalNumChannels, 0.0f); // Initialize gain to 0 dB 
 }
 
-void Lifter::update(const LifterParams& newParams)
+float Lifter::calculateTimeCoeff(float sampleRate, float time_ms)
 {
-    // Simply copy the calculated DSP-ready parameters
-    currentParams = newParams;
+    return std::exp(-1.0f / (sampleRate * (time_ms / 1000.0f)));
+}
+
+void Lifter::updateRatio(float newRatio)
+{
+    ratio = newRatio;
+}
+
+void Lifter::updateRange(float newRange)
+{
+    rangedB = newRange;
+}
+
+void Lifter::updateKnee(float newKnee)
+{
+    kneedB = newKnee;
+}
+
+void Lifter::updateAttack(float sampleRate, float newAttMs)
+{
+    attackCoeff = calculateTimeCoeff(sampleRate, newAttMs);
+}
+
+void Lifter::updateRelease(float sampleRate, float newRelMs)
+{
+    releaseCoeff = calculateTimeCoeff(sampleRate, newRelMs);
 }
 
 void Lifter::process(juce::AudioBuffer<float>& processedBuffer)
 {
     const int numSamples = processedBuffer.getNumSamples();
     const int numChannels = processedBuffer.getNumChannels();
-
-    // Cache parameters from the internal struct
-    const float rangeLinear = currentParams.rangeLinear;
-    const float downAmount = currentParams.downAmount;
-    const float attackCoeff = currentParams.attackCoeff;
-    const float releaseCoeff = currentParams.releaseCoeff;
     
-    // Fixed threshold for downward compression (-12 dBFS / 0.25 linear)
-    const float downThreshold = 0.25f;
+    // --- Pre-calculations ---
+    // Calculate the slope for gain reduction: 1 - (1 / Ratio)
+    const float compressionSlope = 1.0f - (1.0f / ratio);
+    const float kneeStart = rangedB - (kneedB / 2.0f);
+    const float kneeEnd = rangedB + (kneedB / 2.0f);
     
-    // Calculate the Downward Compression Ratio based on Amount (0.0 to 1.0)
-    const float maxRatio = 8.0f;
-    const float ratio = 1.0f + downAmount * (maxRatio - 1.0f); 
-
     // Ensure envelope vector is correctly sized (safety)
     if ((int)envelope.size() != numChannels)
         envelope.assign(numChannels, 1.0f);
@@ -54,52 +65,46 @@ void Lifter::process(juce::AudioBuffer<float>& processedBuffer)
     {
         // Pointers for reading input and writing wet output
         float* channelData = processedBuffer.getWritePointer(channel);
-        float currentEnvelope = envelope[channel];
+        float currentGain_dB = envelope[channel];
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
             float inputSample = channelData[sample];
-            float magnitude = std::abs(inputSample);
+            float magnitude = std::abs (inputSample);
+            
+            // Clamp magnitude to prevent log(0)
             magnitude = std::max(magnitude, minMagnitude);
             
-            float G_up = 1.0f;    
-            float G_down = 1.0f;  
-
-            // 1. UPWARD COMPRESSION LOGIC (Boosting quiet signals)
-            if (magnitude < rangeLinear)
-            {
-                // Gain to push the signal up to the Range threshold
-                // Note: If magnitude is near zero, this gain can be huge.
-                G_up = rangeLinear / magnitude;
-                
-                G_up = std::min(G_up, maxUpwardGain);
-            }
-
-            // 2. DOWNWARD COMPRESSION LOGIC (Limiting loud signals)
-            if (magnitude > downThreshold)
-            {
-                // Calculate the amount signal is above threshold (in linear)
-                float excursion = magnitude - downThreshold;
-                
-                // Linear gain reduction factor calculation
-                G_down = downThreshold + (excursion / ratio); 
-                G_down = downThreshold / G_down; // Convert magnitude scaling back to VCA gain
-            }
-
-            // 3. COMBINED TARGET GAIN & SMOOTHING
-            const float targetGain = G_up * G_down;
-
-            // Attack/Release decision logic
-            float alpha = (targetGain > currentEnvelope) ? attackCoeff : releaseCoeff;
-
-            // Simple 1-pole filter to smooth the applied gain
-            currentEnvelope = (alpha * currentEnvelope) + ((1.0f - alpha) * targetGain);
+            // 1. SIDECHAIN: Convert magnitude to dB
+            const float inputDB = juce::Decibels::gainToDecibels(magnitude);
             
-            // Apply smoothed gain to the sample
-            channelData[sample] = inputSample * currentEnvelope;
+            // 2. TARGET GAIN REDUCTION (in dB)
+            // Hard Knee Equation
+            // float targetGR_dB = (inputDB < rangedB) ? (rangedB - inputDB) * compressionSlope : 0.0f;
+            
+            // Soft Knee Equation
+            float targetGR_dB = 0.0f;
+            if (inputDB < kneeStart)
+            {
+                targetGR_dB = (rangedB - inputDB) * compressionSlope;
+            }
+            else if (inputDB < kneeEnd)
+            {
+                const float x = kneeEnd - inputDB;
+                targetGR_dB = compressionSlope / (2.0f * kneedB) * (x * x);
+            }
+            
+            // 3. ENVELOPE SMOOTHING (in dB)
+            float alpha = (targetGR_dB > currentGain_dB) ? attackCoeff : releaseCoeff;
+            
+            currentGain_dB = (alpha * currentGain_dB) + ((1.0f - alpha) * targetGR_dB);
+            
+            // 4. APPLY GAIN (in-place)
+            const float finalGainLinear = juce::Decibels::decibelsToGain(currentGain_dB);
+            channelData[sample] = inputSample * finalGainLinear;
         }
 
         // Store the final envelope value for the start of the next block
-        envelope[channel] = currentEnvelope; 
+        envelope[channel] = currentGain_dB; 
     }
 }
