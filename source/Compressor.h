@@ -14,13 +14,15 @@ class Compressor
 public:
     Compressor();
     ~Compressor() = default;
+    
+    float calculateTimeCoeff(float sampleRate, float time_ms);
 
     void prepare(double sampleRate, int totalNumChannels);
     void updateRatio(float newRatio);
     void updateThres(float newThres);
     void updateKnee(float newKnee);
-    void updateAttack(float newAttCoeff);
-    void updateRelease(float newRelCoeff);
+    void updateAttack(float sampleRate, float newAttMs);
+    void updateRelease(float sampleRate, float newRelMs);
 
     /**
      * @brief Processes the audio buffer in-place, applying downward compression.

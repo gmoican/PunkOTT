@@ -18,6 +18,13 @@ void Compressor::prepare(double sampleRate, int totalNumChannels)
     envelope.assign(totalNumChannels, 0.0f); // Initialize gain to 0 dB
 }
 
+float Compressor::calculateTimeCoeff(float sampleRate, float time_ms)
+{
+    // 1-pole filter coefficient calculation (alpha = e^(-1 / (sampleRate * time_in_seconds)))
+    // We use -1.0f/tau as the exponent for the exponential smoothing factor.
+    return std::exp(-1.0f / (sampleRate * (time_ms / 1000.0f)));
+}
+
 void Compressor::updateRatio(float newRatio)
 {
     ratio = newRatio;
@@ -33,14 +40,14 @@ void Compressor::updateKnee(float newKnee)
     kneedB = newKnee;
 }
 
-void Compressor::updateAttack(float newAttCoeff)
+void Compressor::updateAttack(float sampleRate, float newAttMs)
 {
-    attackCoeff = newAttCoeff;
+    attackCoeff = calculateTimeCoeff(sampleRate, newAttMs);
 }
 
-void Compressor::updateRelease(float newRelCoeff)
+void Compressor::updateRelease(float sampleRate, float newRelMs)
 {
-    releaseCoeff = newRelCoeff;
+    releaseCoeff = calculateTimeCoeff(sampleRate, newRelMs);
 }
 
 // =========================================================================
