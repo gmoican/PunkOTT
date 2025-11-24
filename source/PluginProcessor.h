@@ -1,7 +1,8 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-// #include <juce_dsp/juce_dsp.h>
+#include "Gate.h"
+#include "Lifter.h"
 #include "Compressor.h"
 #include "Clipper.h"
 
@@ -37,16 +38,16 @@ namespace Parameters
     // Range: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto rangeId = "range";
     constexpr auto rangeName = "Range (dB)";
-    constexpr auto rangeDefault = 12.f;
+    constexpr auto rangeDefault = -40.0f;
 
     // Attack/Release: Time constants for the dynamics
     constexpr auto attackId = "attack";
     constexpr auto attackName = "Attack (ms)";
-    constexpr auto attackDefault = 10.f;
+    constexpr auto attackDefault = 10.0f;
 
     constexpr auto releaseId = "release";
     constexpr auto releaseName = "Release (ms)";
-    constexpr auto releaseDefault = 100.f;
+    constexpr auto releaseDefault = 100.0f;
 
     // Clipper: Applies a soft-clipping function after the dynamics processing
     constexpr auto clipperId = "clipper";
@@ -97,24 +98,15 @@ private:
     juce::AudioProcessorValueTreeState apvts;
     juce::AudioProcessorValueTreeState::ParameterLayout createParams();
     
-    // TODO: Should I use this clipper in the end of the chain ???
-    static float softClipper(float sample)
-    {
-        return 2.f * sample / (abs(sample) + 1.f);
-    }
     // --- INTERNAL PARAMETER HANDLING ---
     // Utilities
     float inGain = 1.0f;
-    float gateThres = 0.0f;
     float wetMix = 1.0f;
     float outGain = 1.0f;
+    Gate gate;
     
-    // Dynamics parameters are handled inside their own classes
-
-    // --- PROCESSORS ---
-    // Gate gate;
-    
-    // Lifter lifter;
+    // --- OTT PROCESSORS ---
+    Lifter lifter;
     Compressor compressor;
     
     Clipper clipper;

@@ -84,6 +84,7 @@ void PunkOTTProcessor::changeProgramName (int index, const juce::String& newName
 }
 
 // =========== PARAMETER LAYOUT ====================
+// TODO: Fine tune OTT parameter ranges
 juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createParams()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
@@ -145,7 +146,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::rangeId,
                                                                    Parameters::rangeName,
-                                                                   juce::NormalisableRange<float>(0.0f, 24.0f, 0.1f),
+                                                                   juce::NormalisableRange<float>(-60.0f, -20.0f, 0.1f),
                                                                    Parameters::rangeDefault
                                                                    )
                        
@@ -202,7 +203,7 @@ void PunkOTTProcessor::updateParameters()
     inGain = juce::Decibels::decibelsToGain(inLeveldB);
     
     const float gatedB = apvts.getRawParameterValue(Parameters::gateId)->load();
-    gateThres = juce::Decibels::decibelsToGain(gatedB);
+    gate.updateThres(gatedB);
     
     const float mixPercent = apvts.getRawParameterValue(Parameters::mixId)->load();
     wetMix = mixPercent / 100.0f;
@@ -212,32 +213,31 @@ void PunkOTTProcessor::updateParameters()
     
     // --- 2. OTT
     float sampleRate = (float) getSampleRate();
+    
+    const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
     const float thresdB = apvts.getRawParameterValue(Parameters::compThresId)->load();
+    
     const float attackMS = apvts.getRawParameterValue(Parameters::attackId)->load();
     const float releaseMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
     
-    // 1-pole filter coefficient calculation (alpha = e^(-1 / (sampleRate * time_in_seconds)))
-    // We use -1.0f/tau as the exponent for the exponential smoothing factor.
-    float attCoeff = std::exp(-1.0f / (sampleRate * (attackMS / 1000.0f)));
-    float relCoeff = std::exp(-1.0f / (sampleRate * (releaseMS / 1000.0f)));
-    
-    // lifter.updateRange(rangedB);
-    // lifter.updateAttack(attCoeff);
-    // lifter.updateRelease(relCoeff);
+    lifter.updateRange(rangedB);
+    lifter.updateAttack(sampleRate, attackMS);
+    lifter.updateRelease(sampleRate, releaseMS);
     compressor.updateThres(thresdB);
-    compressor.updateAttack(attCoeff);
-    compressor.updateRelease(relCoeff);
+    compressor.updateAttack(sampleRate, attackMS);
+    compressor.updateRelease(sampleRate, releaseMS);
     
     clipperState = apvts.getRawParameterValue(Parameters::clipperId)->load();
 }
 
 void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    juce::ignoreUnused(sampleRate);
+    // juce::ignoreUnused(sampleRate);
     
-    // TODO: Un-comment when processor are ready
-    // gate.prepare(sampleRate, samplesPerBlock);
-    // lifter.prepare(sampleRate, samplesPerBlock);
+    gate.prepare(sampleRate, samplesPerBlock);
+    gate.updateAttack((float) sampleRate, 100.f);
+    gate.updateRelease((float) sampleRate, 30.f);
+    lifter.prepare(sampleRate, samplesPerBlock);
     compressor.prepare(sampleRate, samplesPerBlock);
     
     compressedBuffer.setSize(getTotalNumOutputChannels(), samplesPerBlock);
@@ -300,10 +300,10 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     
     // 1. UTILITIES - PRE-OTT
     compressedBuffer.applyGain(inGain);
-    // TODO: NOISE GATE HERE
+    gate.process(compressedBuffer);
     
     //2. OTT
-    // TODO: LIFTER HERE
+    lifter.process(compressedBuffer);
     compressor.processFF(compressedBuffer);
     if (clipperState) {
         clipper.applySoftClipper(compressedBuffer);
