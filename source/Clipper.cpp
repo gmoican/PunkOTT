@@ -15,7 +15,7 @@ void Clipper::applySoftClipper(juce::AudioBuffer<float>& processedBuffer)
         for (int sample = 0; sample < numSamples; ++sample)
         {
             float x = channelData[sample];
-            channelData[sample] = 2.0f * x / (abs(x) + 1.0f);
+            channelData[sample] = 1.2f * x / (abs(x) + 1.0f);
         }
     }
 }
