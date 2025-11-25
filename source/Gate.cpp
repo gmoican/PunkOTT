@@ -5,7 +5,6 @@ static constexpr float minMagnitude = 0.000001f; // Approx -120 dB
 
 Gate::Gate()
 {
-    // Initialize envelope vector size to 0
 }
 
 void Gate::prepare(double sampleRate, int totalNumChannels)

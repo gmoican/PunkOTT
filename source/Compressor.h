@@ -23,12 +23,14 @@ public:
     void updateKnee(float newKnee);
     void updateAttack(float sampleRate, float newAttMs);
     void updateRelease(float sampleRate, float newRelMs);
+    void updateMakeUp(float newMakeUp_dB);
+    
+    float getGainReduction();
 
     /**
      * @brief Processes the audio buffer in-place, applying downward compression.
      *
-     * @param processedBuffer The buffer containing the signal to be compressed. 
-     * This buffer is overwritten with the fully compressed signal.
+     * @param processedBuffer The buffer containing the signal to be processed.
      */
     void processFF(juce::AudioBuffer<float>& processedBuffer);
     void processFB(juce::AudioBuffer<float>& processedBuffer);
@@ -41,6 +43,8 @@ private:
     float kneedB = 6.0f;            // Knee width in dB
     float attackCoeff = 0.0f;       // Smoothing coefficient (Attack)
     float releaseCoeff = 0.0f;      // Smoothing coefficient (Release)
+    float makeUpGaindB = 0.0f;      // Compensation gain after the compression takes place
+    float currentGR_dB = 0.0f;      // Gain reduction (in dB) being applied currently
 
     // --- Prevent copy and move ---
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Compressor)

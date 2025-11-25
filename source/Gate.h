@@ -4,7 +4,7 @@
 
 /**
  * @class Gate
- * @brief Implements a standard, stable, feed-forward downward expansor.
+ * @brief Implements a smooth downward expander (intended to be used as a Noise Gate).
  *
  * All core dynamics processing, including sidechain detection, gain computation,
  * and envelope smoothing, is contained here.
@@ -26,10 +26,9 @@ public:
     void updateRelease(float sampleRate, float newRelMs);
 
     /**
-     * @brief Processes the audio buffer in-place, applying the downward expansion.
+     * @brief Processes the audio buffer in-place, applying a Downward Expander topology.
      *
-     * @param processedBuffer The buffer containing the dry signal (post-input-gain).
-     * This buffer is overwritten with the fully wet, expanded/gated signal.
+     * @param processedBuffer The buffer containing the signal to be processed.
      */
     void process(juce::AudioBuffer<float>& processedBuffer);
 

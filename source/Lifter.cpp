@@ -46,6 +46,16 @@ void Lifter::updateRelease(float sampleRate, float newRelMs)
     releaseCoeff = calculateTimeCoeff(sampleRate, newRelMs);
 }
 
+void Lifter::updateMakeUp(float newMakeUp_dB)
+{
+    makeUpGaindB = newMakeUp_dB;
+}
+
+float Lifter::getGainAddition()
+{
+    return currentGA_dB;
+}
+
 void Lifter::process(juce::AudioBuffer<float>& processedBuffer)
 {
     const int numSamples = processedBuffer.getNumSamples();
@@ -65,7 +75,7 @@ void Lifter::process(juce::AudioBuffer<float>& processedBuffer)
     {
         // Pointers for reading input and writing wet output
         float* channelData = processedBuffer.getWritePointer(channel);
-        float currentGain_dB = envelope[channel];
+        currentGA_dB = envelope[channel];
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -95,16 +105,17 @@ void Lifter::process(juce::AudioBuffer<float>& processedBuffer)
             }
             
             // 3. ENVELOPE SMOOTHING (in dB)
-            float alpha = (targetGR_dB > currentGain_dB) ? attackCoeff : releaseCoeff;
+            float alpha = (targetGR_dB > currentGA_dB) ? attackCoeff : releaseCoeff;
             
-            currentGain_dB = (alpha * currentGain_dB) + ((1.0f - alpha) * targetGR_dB);
+            currentGA_dB = (alpha * currentGA_dB) + ((1.0f - alpha) * targetGR_dB);
             
             // 4. APPLY GAIN (in-place)
-            const float finalGainLinear = juce::Decibels::decibelsToGain(currentGain_dB);
-            channelData[sample] = inputSample * finalGainLinear;
+            const float finalGainLinear = juce::Decibels::decibelsToGain(currentGA_dB);
+            const float makeUpGainLinear = juce::Decibels::decibelsToGain(makeUpGaindB);
+            channelData[sample] = inputSample * finalGainLinear * makeUpGainLinear;
         }
 
         // Store the final envelope value for the start of the next block
-        envelope[channel] = currentGain_dB; 
+        envelope[channel] = currentGA_dB;
     }
 }

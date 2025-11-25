@@ -2,12 +2,9 @@
 
 // Define a floor for magnitude detection to prevent log(0) and instability.
 static constexpr float minMagnitude = 0.00001f;     // Approx -100 dB
-static constexpr float makeUpGainLinear = 1.0f;     // 0 dB TODO: Change if needed
-static constexpr float makeUpGainDB = 0.0f;         // 0 dB TODO: Change if needed
 
 Compressor::Compressor()
 {
-    // Initialize envelope vector size to 0
 }
 
 void Compressor::prepare(double sampleRate, int totalNumChannels)
@@ -48,6 +45,16 @@ void Compressor::updateAttack(float sampleRate, float newAttMs)
 void Compressor::updateRelease(float sampleRate, float newRelMs)
 {
     releaseCoeff = calculateTimeCoeff(sampleRate, newRelMs);
+}
+
+void Compressor::updateMakeUp(float newMakeUp_dB)
+{
+    makeUpGaindB = newMakeUp_dB;
+}
+
+float Compressor::getGainReduction()
+{
+    return currentGR_dB;
 }
 
 // =========================================================================
@@ -110,6 +117,7 @@ void Compressor::processFF(juce::AudioBuffer<float>& processedBuffer)
             
             // 4. APPLY GAIN (in-place)
             const float gainReductionLinear = juce::Decibels::decibelsToGain(currentGR_dB);
+            const float makeUpGainLinear = juce::Decibels::decibelsToGain(makeUpGaindB);
             channelData[sample] = inputSample * gainReductionLinear * makeUpGainLinear;
         }
 
@@ -141,14 +149,14 @@ void Compressor::processFB(juce::AudioBuffer<float>& processedBuffer)
     for (int channel = 0; channel < numChannels; ++channel)
     {
         float* channelData = processedBuffer.getWritePointer(channel);
-        float currentGR_dB = envelope[channel];
+        currentGR_dB = envelope[channel];
         
         for (int sample = 0; sample < numSamples; ++sample)
         {
             float inputSample = channelData[sample];
             
             // 1. APPLY CURRENT GAIN (Based on previous sample's envelope state)
-            const float finalGainDB = currentGR_dB + makeUpGainDB;
+            const float finalGainDB = currentGR_dB + makeUpGaindB;
             const float finalGainLinear = juce::Decibels::decibelsToGain(finalGainDB);
             float outputSample = inputSample * finalGainLinear;
             
