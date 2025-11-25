@@ -17,16 +17,16 @@ public:
     ~Clipper() = default;
 
     // Sample processing
-    float applySoftClipper(float sample);
-    float applyHardClipper(float sample);
-    float applyTanhClipper(float sample);
-    float applyATanClipper(float sample);
+    float applySoftClipper(float sample, float gainFactor);
+    float applyHardClipper(float sample, float gainFactor);
+    float applyTanhClipper(float sample, float gainFactor);
+    float applyATanClipper(float sample, float gainFactor);
     
     // Buffer processing
-    void applySoftClipper(juce::AudioBuffer<float>& processedBuffer);
-    void applyHardClipper(juce::AudioBuffer<float>& processedBuffer);
-    void applyTanhClipper(juce::AudioBuffer<float>& processedBuffer);
-    void applyATanClipper(juce::AudioBuffer<float>& processedBuffer);
+    void applySoftClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor);
+    void applyHardClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor);
+    void applyTanhClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor);
+    void applyATanClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor);
 
 private:
     // --- Prevent copy and move ---
