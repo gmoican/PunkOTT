@@ -40,14 +40,15 @@ namespace Parameters
     constexpr auto rangeName = "Range (dB)";
     constexpr auto rangeDefault = -40.0f;
 
-    // Attack/Release: Time constants for the dynamics
-    constexpr auto attackId = "attack";
-    constexpr auto attackName = "Attack (ms)";
-    constexpr auto attackDefault = 10.0f;
+    // Lifter time control
+    constexpr auto lifterTimeId = "lifterTime";
+    constexpr auto lifterTimeName = "Lifter Time Control";
+    constexpr auto lifterTimeDefault = 0.5f;
 
-    constexpr auto releaseId = "release";
-    constexpr auto releaseName = "Release (ms)";
-    constexpr auto releaseDefault = 100.0f;
+    // Lifter time control
+    constexpr auto compressorTimeId = "compressorTime";
+    constexpr auto compressorTimeName = "Compressor Time Control";
+    constexpr auto compressorTimeDefault = 0.5f;
 
     // Clipper: Applies a soft-clipping function after the dynamics processing
     constexpr auto clipperId = "clipper";

@@ -142,7 +142,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                                                                          " | "          // Separator string for hosts that flatten the hierarchy
                                                                          );
     
-    // Range (Upward) -> TODO: Not yet developed, range should be adjusted
+    // Lifter Threshold (dB)
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::rangeId,
                                                                    Parameters::rangeName,
@@ -162,24 +162,22 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                        
                        );
     
-    // Attack Time
+    // Lifter time control -> Automatically adjusts attack/release times and make-up gain
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
-                                                                   Parameters::attackId,
-                                                                   Parameters::attackName,
-                                                                   juce::NormalisableRange<float>(0.1f, 500.0f, 0.1f, 0.5f, false),
-                                                                   Parameters::attackDefault
+                                                                   Parameters::lifterTimeId,
+                                                                   Parameters::lifterTimeName,
+                                                                   juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+                                                                   Parameters::lifterTimeDefault
                                                                    )
-                       
                        );
     
-    // Release Time
+    // Compressor time control -> Automatically adjusts attack/release times and make-up gain
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
-                                                                   Parameters::releaseId,
-                                                                   Parameters::releaseName,
-                                                                   juce::NormalisableRange<float>(10.0f, 2000.0f, 1.0f, 0.5f, false),
-                                                                   Parameters::releaseDefault
+                                                                   Parameters::compressorTimeId,
+                                                                   Parameters::compressorTimeName,
+                                                                   juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+                                                                   Parameters::compressorTimeDefault
                                                                    )
-                       
                        );
     
     // Clipper
@@ -214,18 +212,36 @@ void PunkOTTProcessor::updateParameters()
     // --- 2. OTT
     float sampleRate = (float) getSampleRate();
     
+    // Lifter updates
     const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
-    const float thresdB = apvts.getRawParameterValue(Parameters::compThresId)->load();
+    const float lifterMu = apvts.getRawParameterValue(Parameters::lifterTimeId)->load();
+    const float lifterAttackMS = juce::jmap(lifterMu, 10.0f, 50.0f);
+    const float lifterReleaseMS = juce::jmap(lifterMu, 200.0f, 30.0f);
+    const float lifterMakeUpGain = juce::jmap(lifterMu, -9.0f, 0.0f) + juce::jmap(rangedB, -60.f, -20.f, 3.0f, -3.0f);
     
-    const float attackMS = apvts.getRawParameterValue(Parameters::attackId)->load();
-    const float releaseMS = apvts.getRawParameterValue(Parameters::releaseId)->load();
-    
+    /* LIFTER TIMES + MAKEUP
+     * Attack   {  10ms - 50ms }
+     * Release  { 200ms - 30ms }
+     * MakeUp   {  -9dB -  0dB }
+     */
     lifter.updateRange(rangedB);
-    lifter.updateAttack(sampleRate, attackMS);
-    lifter.updateRelease(sampleRate, releaseMS);
+    lifter.updateAttack(sampleRate, lifterAttackMS);
+    lifter.updateRelease(sampleRate, lifterReleaseMS);
+    lifter.updateMakeUp(lifterMakeUpGain);
+    
+    // Compressor updates
+    const float thresdB = apvts.getRawParameterValue(Parameters::compThresId)->load();
+    const float compressorMu = apvts.getRawParameterValue(Parameters::compressorTimeId)->load();
+    const float compAttackMS = juce::jmap(compressorMu, 0.1f, 30.0f);
+    const float compReleaseMS = juce::jmap(compressorMu, 10.0f, 100.0f);
+    
+    /* COMPRESSOR TIMES + MAKEUP
+     * Attack   { 0.1ms -  30ms }
+     * Release  {  10ms - 100ms }
+     */
     compressor.updateThres(thresdB);
-    compressor.updateAttack(sampleRate, attackMS);
-    compressor.updateRelease(sampleRate, releaseMS);
+    compressor.updateAttack(sampleRate, compAttackMS);
+    compressor.updateRelease(sampleRate, compReleaseMS);
     
     clipperState = apvts.getRawParameterValue(Parameters::clipperId)->load();
 }
@@ -306,7 +322,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     lifter.process(compressedBuffer);
     compressor.processFF(compressedBuffer);
     if (clipperState) {
-        clipper.applySoftClipper(compressedBuffer);
+        clipper.applyTanhClipper(compressedBuffer, 1.7f);
     }
     
     // 3. UTILITIES - POST-OTT
