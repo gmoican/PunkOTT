@@ -1,10 +1,10 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include "Gate.h"
-#include "Lifter.h"
-#include "Compressor.h"
-#include "Clipper.h"
+#include "dsp/Gate.h"
+#include "dsp/Lifter.h"
+#include "dsp/Compressor.h"
+#include "dsp/Clipper.h"
 
 #if (MSVC)
 #include "ipps.h"
