@@ -1,119 +1,86 @@
 #include "CustomLookAndFeel.h"
 
-// --- Static Color Initializations ---
-const juce::Colour CustomLookAndFeel::bgPrimary         = juce::Colour(0xFF161619); // Deep Black/Gray
-const juce::Colour CustomLookAndFeel::bgSecondary       = juce::Colour(0xFF2C2C2C); // Panel Gray
-const juce::Colour CustomLookAndFeel::accentPrimary     = juce::Colour(0xFF00D8FF); // Bright Cyan
-const juce::Colour CustomLookAndFeel::accentSecondary   = juce::Colour(0xFFFF9500); // Vibrant Orange
-const juce::Colour CustomLookAndFeel::textDefault       = juce::Colour(0xFFDCDCDC); // Near-White
-
 CustomLookAndFeel::CustomLookAndFeel()
 {
-    // --- Global Color Setup ---
-    // Set colors for various component states using the LookAndFeel mechanism.
-    
-    // Backgrounds and Borders
-    setColour(juce::DocumentWindow::backgroundColourId, bgPrimary);
-    setColour(juce::TextButton::buttonColourId, bgSecondary);
-    setColour(juce::TextButton::buttonOnColourId, accentSecondary);
-    setColour(juce::TextButton::textColourOffId, textDefault);
-    setColour(juce::TextButton::textColourOnId, juce::Colours::black); 
-    setColour(juce::ComboBox::backgroundColourId, bgSecondary.darker(0.1f));
-    
-    // Sliders (Knobs)
-    setColour(juce::Slider::backgroundColourId, bgSecondary);
-    setColour(juce::Slider::thumbColourId, accentPrimary);
-    setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-    setColour(juce::Slider::trackColourId, bgSecondary.darker(0.3f));
-    
-    // Text
-    setColour(juce::Label::textColourId, textDefault);
-    setColour(juce::Slider::textBoxTextColourId, textDefault);
+    // Set default colors for components
+    setColour(juce::Slider::thumbColourId, UIColors::primary);
+    setColour(juce::Slider::trackColourId, UIColors::secondary);
+    setColour(juce::Slider::backgroundColourId, UIColors::background);
 
-    // Set a default global font
-    // setDefaultSansSerifFont(juce::Font("Inter", 14.0f, juce::Font::plain));
+    setColour(juce::TextButton::buttonColourId, UIColors::secondary);
+    setColour(juce::TextButton::buttonOnColourId, UIColors::primary);
+    setColour(juce::TextButton::textColourOffId, UIColors::text);
+    setColour(juce::TextButton::textColourOnId, UIColors::background);
+
+    setColour(juce::ComboBox::backgroundColourId, UIColors::secondary);
+    setColour(juce::ComboBox::textColourId, UIColors::text);
 }
 
-// --- drawRotarySlider Implementation ---
-void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height, float sliderPos,
-                                         const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider& slider)
+void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
+                                         float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
+                                         juce::Slider& slider)
 {
-    // Define the central area for the knob drawing
-    auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(1.0f);
-    float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
-    float centreX = bounds.getCentreX();
-    float centreY = bounds.getCentreY();
-    float lineThickness = radius * 0.12f;
+    auto radius = (float)juce::jmin(width / 2, height / 2) - 5.0f;
+    auto centreX = (float)x + (float)width * 0.5f;
+    auto centreY = (float)y + (float)height * 0.5f;
+    auto rx = centreX - radius;
+    auto ry = centreY - radius;
+    auto rw = radius * 2.0f;
+    auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
 
-    // The angle of the indicator line (current value)
-    float angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+    // Draw background circle
+    g.setColour(UIColors::secondary.withAlpha(0.3f));
+    g.fillEllipse(rx, ry, rw, rw);
 
-    // 1. Draw the Background Track (Inactive part of the knob)
-    juce::Path backgroundArc;
-    backgroundArc.addCentredArc(centreX, centreY, radius, radius, 0.0f,
-                                rotaryStartAngle, rotaryEndAngle, true);
-    
-    // g.setColour(getColour(juce::Slider::trackColourId));
-    g.strokePath(backgroundArc, juce::PathStrokeType(lineThickness, juce::PathStrokeType::mitered, juce::PathStrokeType::butt));
+    // Draw track (background arc)
+    g.setColour(UIColors::secondary);
+    juce::Path trackArc;
+    trackArc.addCentredArc(centreX, centreY, radius, radius, 0.0f,
+                           rotaryStartAngle, rotaryEndAngle, true);
+    g.strokePath(trackArc, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-    // 2. Draw the Value Track (Active part of the knob)
-    if (sliderPos > 0.0f)
-    {
-        juce::Path valueArc;
-        valueArc.addCentredArc(centreX, centreY, radius, radius, 0.0f,
-                                rotaryStartAngle, angle, true);
-        
-        // g.setColour(getColour(juce::Slider::thumbColourId));
-        g.strokePath(valueArc, juce::PathStrokeType(lineThickness, juce::PathStrokeType::mitered, juce::PathStrokeType::butt));
-    }
-    
-    // 3. Draw the Knob Cap (Inner Circle)
-    juce::Rectangle<float> knobArea = bounds.reduced(radius * 0.15f);
-    
-    // Inner Shadow effect for depth
-    g.setColour(juce::Colours::black.withAlpha(0.5f));
-    g.fillEllipse(knobArea.reduced(2.0f));
+    // Draw filled arc (value)
+    g.setColour(UIColors::primary);
+    juce::Path valueArc;
+    valueArc.addCentredArc(centreX, centreY, radius, radius, 0.0f,
+                           rotaryStartAngle, angle, true);
+    g.strokePath(valueArc, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-    // Main knob body
-    g.setColour(bgSecondary.brighter(0.2f));
-    g.fillEllipse(knobArea);
+    // Draw thumb (indicator)
+    auto thumbWidth = 6.0f;
+    auto thumbHeight = radius * 0.5f;
+    g.setColour(UIColors::primary);
 
-    // 4. Draw the Pointer (line indicator)
-    juce::Point<float> thumbPoint(centreX + radius * 0.8f * std::cos(angle),
-                                  centreY + radius * 0.8f * std::sin(angle));
-
-    juce::Path p;
-    p.startNewSubPath(centreX, centreY);
-    p.lineTo(thumbPoint);
-    
-    // g.setColour(getColour(juce::Slider::thumbColourId).brighter(0.5f));
-    g.strokePath(p, juce::PathStrokeType(lineThickness * 0.5f)); 
+    juce::Path thumb;
+    thumb.addEllipse(0.0f, 0.0f, thumbWidth, thumbHeight);
+    thumb.applyTransform(juce::AffineTransform::rotation(angle).translated(centreX, centreY));
+    g.fillPath(thumb);
 }
 
-
-// --- drawButtonText Implementation ---
-void CustomLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown)
+void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height,
+                                         float sliderPos, float minSliderPos, float maxSliderPos,
+                                         const juce::Slider::SliderStyle style, juce::Slider& slider)
 {
-    juce::Rectangle<int> textBounds = button.getLocalBounds().reduced (5, 4);
+    // Use the default JUCE drawing for linear sliders
+    juce::LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
+}
 
-    // Determine the colour based on state
-    juce::Colour colourToUse = button.isColourSpecified(juce::TextButton::textColourOffId) 
-                                ? button.findColour(juce::TextButton::textColourOffId) 
-                                : textDefault;
+void CustomLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& button,
+                                             const juce::Colour& backgroundColour,
+                                             bool shouldDrawButtonAsHighlighted,
+                                             bool shouldDrawButtonAsDown)
+{
+    // Draw the button with rounded corners
+    juce::Rectangle<int> bounds = button.getBounds();
+    g.setColour(shouldDrawButtonAsDown ? UIColors::primary : backgroundColour);
+    g.fillRoundedRectangle(bounds.toFloat(), 6.0f);
+}
 
-    if (button.getToggleState())
-    {
-        // If toggled ON, use black text on the accent color
-        colourToUse = juce::Colours::black;
-    }
-    else if (shouldDrawButtonAsHighlighted || shouldDrawButtonAsDown)
-    {
-        // Slightly lighten text on hover/down
-        colourToUse = colourToUse.brighter(0.3f);
-    }
-    
-    g.setColour(colourToUse);
-    // g.setFont(button.getFont());
-
-    g.drawFittedText(button.getButtonText(), textBounds, juce::Justification::centred, 1);
+void CustomLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button,
+                                       bool shouldDrawButtonAsHighlighted,
+                                       bool shouldDrawButtonAsDown)
+{
+    // Set text color based on button state
+    g.setColour(shouldDrawButtonAsDown ? UIColors::background : UIColors::text);
+    g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, true);
 }

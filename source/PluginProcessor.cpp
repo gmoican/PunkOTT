@@ -342,8 +342,8 @@ bool PunkOTTProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* PunkOTTProcessor::createEditor()
 {
-    // return new PluginEditor (*this);
-    return new juce::GenericAudioProcessorEditor (*this);
+    return new PluginEditor (*this);
+    // return new juce::GenericAudioProcessorEditor (*this);
 }
 
 //==============================================================================
