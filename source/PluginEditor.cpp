@@ -4,104 +4,132 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     juce::ignoreUnused (processorRef);
-    juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
+    // juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
     
     // --- UTILITIES PARAMETERS ---
     // Configure the input knob
     inputSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     inputSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    inputSlider.setRange(0.0, 100.0, 0.1);
-    inputSlider.setValue(50.0);
+    inputSlider.setRange(Parameters::inMin, Parameters::inMax, 0.1);
+    inputSlider.setValue(Parameters::inDefault);
     addAndMakeVisible(inputSlider);
-    inputLabel.setText("Input", juce::dontSendNotification);
+    
+    inputLabel.setText(Parameters::inName, juce::dontSendNotification);
     inputLabel.setJustificationType(juce::Justification::centred);
     inputLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(inputLabel);
     
+    inputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::inId, inputSlider);
+    
     // Configure the gate knob
     gateSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     gateSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    gateSlider.setRange(0.0, 100.0, 0.1);
-    gateSlider.setValue(50.0);
+    gateSlider.setRange(Parameters::gateMin, Parameters::gateMax, 0.1);
+    gateSlider.setValue(Parameters::gateDefault);
     addAndMakeVisible(gateSlider);
-    gateLabel.setText("Gate", juce::dontSendNotification);
+    
+    gateLabel.setText(Parameters::gateName, juce::dontSendNotification);
     gateLabel.setJustificationType(juce::Justification::centred);
     gateLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(gateLabel);
     
+    gateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::gateId, gateSlider);
+    
     // Configure the mix knob
     mixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     mixSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    mixSlider.setRange(0.0, 100.0, 0.1);
-    mixSlider.setValue(50.0);
+    mixSlider.setRange(Parameters::mixMin, Parameters::mixMax, 0.1);
+    mixSlider.setValue(Parameters::mixDefault);
     addAndMakeVisible(mixSlider);
-    mixLabel.setText("Mix", juce::dontSendNotification);
+    
+    mixLabel.setText(Parameters::mixName, juce::dontSendNotification);
     mixLabel.setJustificationType(juce::Justification::centred);
     mixLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(mixLabel);
     
+    mixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::mixId, mixSlider);
+    
     // Configure the output knob
     outputSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     outputSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    outputSlider.setRange(0.0, 100.0, 0.1);
-    outputSlider.setValue(50.0);
+    outputSlider.setRange(Parameters::outMin, Parameters::outMax, 0.1);
+    outputSlider.setValue(Parameters::outDefault);
     addAndMakeVisible(outputSlider);
-    outputLabel.setText("Output", juce::dontSendNotification);
+    
+    outputLabel.setText(Parameters::outName, juce::dontSendNotification);
     outputLabel.setJustificationType(juce::Justification::centred);
     outputLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(outputLabel);
     
+    outputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::outId, outputSlider);
+
     // --- DYNAMIC PARAMETERS ---
     // Configure the lifter-range knob
     lifterRangeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     lifterRangeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    lifterRangeSlider.setRange(0.0, 100.0, 0.1);
-    lifterRangeSlider.setValue(50.0);
+    lifterRangeSlider.setRange(Parameters::lifterThresMin, Parameters::lifterThresMax, 0.1);
+    lifterRangeSlider.setValue(Parameters::lifterThresDefault);
     addAndMakeVisible(lifterRangeSlider);
-    lifterRangeLabel.setText("Lift", juce::dontSendNotification);
+    
+    lifterRangeLabel.setText(Parameters::lifterThresName, juce::dontSendNotification);
     lifterRangeLabel.setJustificationType(juce::Justification::centred);
     lifterRangeLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(lifterRangeLabel);
     
+    lifterRangeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterThresId, lifterRangeSlider);
+
     // Configure the lifter-time knob
     lifterTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     lifterTimeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    lifterTimeSlider.setRange(0.0, 100.0, 0.1);
-    lifterTimeSlider.setValue(50.0);
+    lifterTimeSlider.setRange(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.1);
+    lifterTimeSlider.setValue(Parameters::lifterTimeDefault);
     addAndMakeVisible(lifterTimeSlider);
+    
     lifterTimeLabel.setText("α", juce::dontSendNotification);
     lifterTimeLabel.setJustificationType(juce::Justification::centred);
     lifterTimeLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(lifterTimeLabel);
     
+    lifterTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterTimeId, lifterTimeSlider);
+
     // Configure the comp-thres knob
     compThresSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     compThresSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    compThresSlider.setRange(0.0, 100.0, 0.1);
-    compThresSlider.setValue(50.0);
+    compThresSlider.setRange(Parameters::compThresMin, Parameters::compThresMax, 0.1);
+    compThresSlider.setValue(Parameters::compThresDefault);
     addAndMakeVisible(compThresSlider);
-    compThresLabel.setText("Comp", juce::dontSendNotification);
+    
+    compThresLabel.setText(Parameters::compThresName, juce::dontSendNotification);
     compThresLabel.setJustificationType(juce::Justification::centred);
     compThresLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(compThresLabel);
     
+    compThresAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compThresId, compThresSlider);
+    
     // Configure the comp-time knob
     compTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     compTimeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
-    compTimeSlider.setRange(0.0, 100.0, 0.1);
-    compTimeSlider.setValue(50.0);
+    compTimeSlider.setRange(Parameters::compTimeMin, Parameters::compTimeMax, 0.1);
+    compTimeSlider.setValue(Parameters::compTimeDefault);
     addAndMakeVisible(compTimeSlider);
+    
     compTimeLabel.setText("β", juce::dontSendNotification);
     compTimeLabel.setJustificationType(juce::Justification::centred);
     compTimeLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(compTimeLabel);
     
+    compTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compTimeId, compTimeSlider);
+    
     // Configure the clipper button
+    clipperButton.setClickingTogglesState(true);
     addAndMakeVisible(clipperButton);
-    clipperLabel.setText("Clipper", juce::dontSendNotification);
+    
+    clipperLabel.setText(Parameters::clipperName, juce::dontSendNotification);
     clipperLabel.setJustificationType(juce::Justification::centred);
     clipperLabel.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(clipperLabel);
+    
+    clipperAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, Parameters::clipperId, clipperButton);
 
     // --- MELATONIN  ---
     addAndMakeVisible (inspectButton);
@@ -124,7 +152,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
 
 PluginEditor::~PluginEditor()
 {
-    juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+    // juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
 }
 
 void PluginEditor::paint (juce::Graphics& g)

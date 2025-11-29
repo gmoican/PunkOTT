@@ -27,13 +27,19 @@ private:
     CustomLookAndFeel myCustomLnF;
     
     // Sliders - Rotary knobs
-    juce::Slider inputSlider, gateSlider, mixSlider, outputSlider, lifterRangeSlider, lifterTimeSlider, compThresSlider, compTimeSlider;
-    juce::Label inputLabel, gateLabel, mixLabel, outputLabel, lifterRangeLabel, lifterTimeLabel, compThresLabel, compTimeLabel, clipperLabel;
+    juce::Slider inputSlider, gateSlider, mixSlider, outputSlider;
+    juce::Slider lifterRangeSlider, lifterTimeSlider, compThresSlider, compTimeSlider;
+
+    juce::Label inputLabel, gateLabel, mixLabel, outputLabel;
+    juce::Label lifterRangeLabel, lifterTimeLabel, compThresLabel, compTimeLabel, clipperLabel;
     
     juce::TextButton clipperButton;
     
-    // Attachments for linking sliders-parameters TODO: Uncomment
-    // std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputAttachment;
+    // Attachments for linking sliders-parameters
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputAttachment, gateAttachment, mixAttachment, outputAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lifterRangeAttachment, lifterTimeAttachment, compThresAttachment, compTimeAttachment;
+    
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> clipperAttachment;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
 };
