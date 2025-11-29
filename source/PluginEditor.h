@@ -26,6 +26,9 @@ private:
     // Custom Look and Feel
     CustomLookAndFeel myCustomLnF;
     
+    // Layout utilities
+    juce::TextButton header, sidebarLeft, sidebarRight, lifterContainer, compContainer, displayContainer, footer;
+    
     // Sliders - Rotary knobs
     juce::Slider inputSlider, gateSlider, mixSlider, outputSlider;
     juce::Slider lifterRangeSlider, lifterTimeSlider, compThresSlider, compTimeSlider;
@@ -34,6 +37,9 @@ private:
     juce::Label lifterRangeLabel, lifterTimeLabel, compThresLabel, compTimeLabel, clipperLabel;
     
     juce::TextButton clipperButton;
+    
+    // Version
+    juce::Label versionTag;
     
     // Attachments for linking sliders-parameters
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputAttachment, gateAttachment, mixAttachment, outputAttachment;

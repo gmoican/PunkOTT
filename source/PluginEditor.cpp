@@ -6,8 +6,37 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     juce::ignoreUnused (processorRef);
     // juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
     
+    // --- LAYOUT ---
+    header.setColour (juce::TextButton::buttonColourId, juce::Colours::cornflowerblue);
+    // header.setButtonText ("Header");
+    addAndMakeVisible (header);
+    
+    footer.setColour (juce::TextButton::buttonColourId, juce::Colours::cornflowerblue);
+    // footer.setButtonText ("Footer");
+    addAndMakeVisible (footer);
+    
+    sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    // sidebarLeft.setButtonText ("Sidebar L");
+    addAndMakeVisible (sidebarLeft);
+    
+    sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    // sidebarRight.setButtonText ("Sidebar R");
+    addAndMakeVisible (sidebarRight);
+    
+    lifterContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::lime);
+    // lifterContainer.setButtonText("Lifter");
+    addAndMakeVisible (lifterContainer);
+    
+    compContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::yellowgreen);
+    // compContainer.setButtonText("Comp");
+    addAndMakeVisible (compContainer);
+    
+    displayContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::orange);
+    // displayContainer.setButtonText("Display");
+    addAndMakeVisible (displayContainer);
+    
     // --- UTILITIES PARAMETERS ---
-    // Configure the input knob
+    // Input knob
     inputSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     inputSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     inputSlider.setRange(Parameters::inMin, Parameters::inMax, 0.1);
@@ -21,7 +50,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     inputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::inId, inputSlider);
     
-    // Configure the gate knob
+    // Gate knob
     gateSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     gateSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     gateSlider.setRange(Parameters::gateMin, Parameters::gateMax, 0.1);
@@ -35,7 +64,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     gateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::gateId, gateSlider);
     
-    // Configure the mix knob
+    // Mix knob
     mixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     mixSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     mixSlider.setRange(Parameters::mixMin, Parameters::mixMax, 0.1);
@@ -49,7 +78,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     mixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::mixId, mixSlider);
     
-    // Configure the output knob
+    // Output knob
     outputSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     outputSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     outputSlider.setRange(Parameters::outMin, Parameters::outMax, 0.1);
@@ -64,7 +93,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     outputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::outId, outputSlider);
 
     // --- DYNAMIC PARAMETERS ---
-    // Configure the lifter-range knob
+    // Lifter-range knob
     lifterRangeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     lifterRangeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     lifterRangeSlider.setRange(Parameters::lifterThresMin, Parameters::lifterThresMax, 0.1);
@@ -78,7 +107,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     lifterRangeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterThresId, lifterRangeSlider);
 
-    // Configure the lifter-time knob
+    // Lifter-time knob
     lifterTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     lifterTimeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     lifterTimeSlider.setRange(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.1);
@@ -92,7 +121,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     lifterTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterTimeId, lifterTimeSlider);
 
-    // Configure the comp-thres knob
+    // Comp-thres knob
     compThresSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     compThresSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     compThresSlider.setRange(Parameters::compThresMin, Parameters::compThresMax, 0.1);
@@ -106,7 +135,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     compThresAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compThresId, compThresSlider);
     
-    // Configure the comp-time knob
+    // Comp-time knob
     compTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     compTimeSlider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 20);
     compTimeSlider.setRange(Parameters::compTimeMin, Parameters::compTimeMax, 0.1);
@@ -120,7 +149,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     compTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compTimeId, compTimeSlider);
     
-    // Configure the clipper button
+    // Clipper button
     clipperButton.setClickingTogglesState(true);
     addAndMakeVisible(clipperButton);
     
@@ -130,6 +159,13 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     addAndMakeVisible(clipperLabel);
     
     clipperAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, Parameters::clipperId, clipperButton);
+    
+    // Version tag
+    versionTag.setText(juce::String ("") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " by @punkarra4",
+                       juce::dontSendNotification);
+    versionTag.setJustificationType(juce::Justification::centred);
+    versionTag.setColour(juce::Label::textColourId, UIColors::text);
+    addAndMakeVisible(versionTag);
 
     // --- MELATONIN  ---
     addAndMakeVisible (inspectButton);
@@ -160,45 +196,86 @@ void PluginEditor::paint (juce::Graphics& g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (UIColors::background);
 
-    auto area = getLocalBounds();
-    g.setColour (UIColors::text);
-    g.setFont (16.0f);
-    auto helloWorld = juce::String ("Hello from ") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " running in " + CMAKE_BUILD_TYPE;
-    g.drawText (helloWorld, area.removeFromTop (150), juce::Justification::centred, false);
+    // auto area = getLocalBounds();
+    // g.setColour (UIColors::text);
+    // g.setFont (16.0f);
+    // auto helloWorld = juce::String ("Hello from ") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " running in " + CMAKE_BUILD_TYPE;
+    // g.drawText (helloWorld, area.removeFromTop (150), juce::Justification::centred, false);
 }
 
 void PluginEditor::resized()
 {
     // layout the positions of your child components here
     auto area = getLocalBounds();
-    area.removeFromBottom(50);
-    inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
+    // area.removeFromBottom(50);
+    // inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
     
-    // Position the slider and label
-    inputSlider.setBounds(5, 5, 50, 50);
-    inputLabel.setBounds(5, 40, 50, 10);
+    // --- LAYOUT SETUP ---
+    auto headerArea = area.removeFromTop(50);
+    auto footerArea = area.removeFromBottom(30);
+    auto sideLArea = area.removeFromLeft(50);
+    auto sideRArea = area.removeFromRight(50);
+    header.setBounds(headerArea);
+    footer.setBounds(footerArea);
+    sidebarLeft.setBounds(sideLArea);
+    sidebarRight.setBounds(sideRArea);
     
-    gateSlider.setBounds(60, 5, 50, 50);
-    gateLabel.setBounds(60, 40, 50, 10);
+    // --- FOOTER ---
+    versionTag.setBounds(footerArea);
     
-    mixSlider.setBounds(410, 5, 50, 50);
-    mixLabel.setBounds(410, 40, 50, 10);
+    // --- HEADER CONTROLS ---
+    inputSlider.setBounds(headerArea.removeFromLeft(headerArea.getHeight()));
+    // inputLabel.setBounds(5, 40, 50, 10);
     
-    outputSlider.setBounds(465, 5, 50, 50);
-    outputLabel.setBounds(465, 40, 50, 10);
+    gateSlider.setBounds(headerArea.removeFromLeft(headerArea.getHeight()));
+    // gateLabel.setBounds(60, 40, 50, 10);
     
-    lifterRangeSlider.setBounds(100, 100, 80, 80);
-    lifterRangeLabel.setBounds(100, 150, 80, 30);
+    outputSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
+    // outputLabel.setBounds(465, 40, 50, 10);
     
-    lifterTimeSlider.setBounds(200, 100, 80, 80);
-    lifterTimeLabel.setBounds(200, 150, 80, 30);
+    mixSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
+    // mixLabel.setBounds(410, 40, 50, 10);
     
-    compThresSlider.setBounds(300, 100, 80, 80);
-    compThresLabel.setBounds(300, 150, 80, 30);
+    clipperButton.setBounds(headerArea.removeFromRight(headerArea.getHeight())
+                                      .reduced(10)
+                            );
+    // clipperLabel.setBounds(400, 350, 50, 50);
     
-    compTimeSlider.setBounds(400, 100, 80, 80);
-    compTimeLabel.setBounds(400, 150, 80, 30);
+    // --- LIFTER AND COMP CONTROLS ---
+    auto contentItemHeight = 100;
+    // Reserve the top area for lifter and comp containers
+    auto topArea = area.removeFromTop(contentItemHeight);
     
-    clipperButton.setBounds(400, 300, 50, 50);
-    clipperLabel.setBounds(400, 350, 50, 50);
+    // Split the top area in half horizontally
+    auto lifterArea = topArea.removeFromLeft(topArea.getWidth() / 2).reduced(5);
+    auto compArea = topArea.reduced(5);
+    
+    lifterContainer.setBounds (lifterArea);
+    compContainer.setBounds (compArea);
+    
+    // Position sliders inside lifter container
+    auto lifterSliderArea = lifterArea.reduced(10);
+    lifterRangeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderArea.getWidth() / 2));
+    lifterTimeSlider.setBounds(lifterSliderArea);
+    // lifterRangeSlider.setBounds(dynamicsArea.removeFromLeft(dynamicsArea.getWidth() / 2));
+    // // lifterRangeLabel.setBounds(100, 150, 80, 30);
+    //
+    // lifterTimeSlider.setBounds(dynamicsArea.removeFromLeft(dynamicsArea.getWidth() / 2));
+    // // lifterTimeLabel.setBounds(200, 150, 80, 30);
+    
+    // Position sliders inside comp container
+    auto compSliderArea = compArea.reduced(10);
+    compThresSlider.setBounds(compSliderArea.removeFromLeft(compSliderArea.getWidth() / 2));
+    compTimeSlider.setBounds(compSliderArea);
+    // compThresSlider.setBounds(300, 100, 80, 80);
+    // compThresLabel.setBounds(300, 150, 80, 30);
+    //
+    // compTimeSlider.setBounds(400, 100, 80, 80);
+    // compTimeLabel.setBounds(400, 150, 80, 30);
+    
+    // --- DISPLAY ---
+    displayContainer.setBounds (area.removeFromTop (contentItemHeight * 2)
+                                    .reduced(5)
+                                );
+
 }
