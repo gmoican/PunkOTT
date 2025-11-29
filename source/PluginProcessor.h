@@ -15,40 +15,56 @@ namespace Parameters
     // ======= UTILITY PARAMETERS ========
     constexpr auto inId = "in_gain";
     constexpr auto inName = "Input Gain (dB)";
-    constexpr auto inDefault = 0.f;
+    constexpr auto inDefault = 0.0f;
+    constexpr auto inMin = -24.0f;
+    constexpr auto inMax = 24.0f;
 
     constexpr auto gateId = "gate_thresh";
     constexpr auto gateName = "Input Gate";
     constexpr auto gateDefault = -80.f;
+    constexpr auto gateMin = -90.0f;
+    constexpr auto gateMax = 0.0f;
 
     constexpr auto mixId = "mix";
     constexpr auto mixName = "Mix";
     constexpr auto mixDefault = 100.f;
+    constexpr auto mixMin = 0.0f;
+    constexpr auto mixMax = 100.0f;
 
     constexpr auto outId = "out_gain";
     constexpr auto outName = "Output Gain (dB)";
     constexpr auto outDefault = 0.f;
+    constexpr auto outMin = -24.0f;
+    constexpr auto outMax = 24.0f;
 
     // ========== OTT PARAMETERS ===========
     // Comp: Determines the ceiling (in dB) for high-level signals to be compressed down
     constexpr auto compThresId = "comp";
     constexpr auto compThresName = "Comp Threshold (dB)";
     constexpr auto compThresDefault = -12.0f;
+    constexpr auto compThresMin = -24.0f;
+    constexpr auto compThresMax = 0.0f;
 
-    // Range: Determines the ceiling (in dB) for low-level signals to be lifted up
-    constexpr auto rangeId = "range";
-    constexpr auto rangeName = "Range (dB)";
-    constexpr auto rangeDefault = -40.0f;
+    // Comp time control
+    constexpr auto compTimeId = "compressorTime";
+    constexpr auto compTimeName = "Compressor Time Control";
+    constexpr auto compTimeDefault = 0.5f;
+    constexpr auto compTimeMin = 0.0f;
+    constexpr auto compTimeMax = 1.0f;
+
+    // Lifter: Determines the ceiling (in dB) for low-level signals to be lifted up
+    constexpr auto lifterThresId = "lifter";
+    constexpr auto lifterThresName = "Lifter Thres (dB)";
+    constexpr auto lifterThresDefault = -40.0f;
+    constexpr auto lifterThresMin = -80.0f;
+    constexpr auto lifterThresMax = 0.0f;
 
     // Lifter time control
     constexpr auto lifterTimeId = "lifterTime";
     constexpr auto lifterTimeName = "Lifter Time Control";
     constexpr auto lifterTimeDefault = 0.5f;
-
-    // Lifter time control
-    constexpr auto compressorTimeId = "compressorTime";
-    constexpr auto compressorTimeName = "Compressor Time Control";
-    constexpr auto compressorTimeDefault = 0.5f;
+    constexpr auto lifterTimeMin = 0.0f;
+    constexpr auto lifterTimeMax = 1.0f;
 
     // Clipper: Applies a soft-clipping function after the dynamics processing
     constexpr auto clipperId = "clipper";
@@ -90,13 +106,11 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     
     // MY STUFF ====================================================================
-    // Public method to access the parameter state for the Editor (GUI)
-    juce::AudioProcessorValueTreeState& getValueTreeState() { return apvts; }
+    juce::AudioProcessorValueTreeState apvts;
     
     void updateParameters();
 
 private:
-    juce::AudioProcessorValueTreeState apvts;
     juce::AudioProcessorValueTreeState::ParameterLayout createParams();
     
     // --- INTERNAL PARAMETER HANDLING ---

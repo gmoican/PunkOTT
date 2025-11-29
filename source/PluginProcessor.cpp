@@ -100,7 +100,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     utilsGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                      Parameters::inId,
                                                                      Parameters::inName,
-                                                                     juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f),
+                                                                     juce::NormalisableRange<float>(Parameters::inMin, Parameters::inMax, 0.1f),
                                                                      Parameters::inDefault
                                                                      )
                          );
@@ -109,7 +109,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     utilsGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                      Parameters::gateId,
                                                                      Parameters::gateName,
-                                                                     juce::NormalisableRange<float>(-90.0f, 0.0f, 0.1f),
+                                                                     juce::NormalisableRange<float>(Parameters::gateMin, Parameters::gateMax, 0.1f),
                                                                      Parameters::gateDefault
                                                                      )
                          );
@@ -118,7 +118,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     utilsGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                      Parameters::mixId,
                                                                      Parameters::mixName,
-                                                                     juce::NormalisableRange<float>(0.0f, 100.0f, 1.0f),
+                                                                     juce::NormalisableRange<float>(Parameters::mixMin, Parameters::mixMax, 1.0f),
                                                                      Parameters::mixDefault
                                                                      )
                          );
@@ -127,7 +127,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     utilsGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                      Parameters::outId,
                                                                      Parameters::outName,
-                                                                     juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f),
+                                                                     juce::NormalisableRange<float>(Parameters::outMin, Parameters::outMax, 0.1f),
                                                                      Parameters::outDefault
                                                                      )
                          );
@@ -144,10 +144,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     
     // Lifter Threshold (dB)
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
-                                                                   Parameters::rangeId,
-                                                                   Parameters::rangeName,
-                                                                   juce::NormalisableRange<float>(-60.0f, -20.0f, 0.1f),
-                                                                   Parameters::rangeDefault
+                                                                   Parameters::lifterThresId,
+                                                                   Parameters::lifterThresName,
+                                                                   juce::NormalisableRange<float>(Parameters::lifterThresMin, Parameters::lifterThresMax, 0.1f),
+                                                                   Parameters::lifterThresDefault
                                                                    )
                        
                        );
@@ -156,7 +156,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::compThresId,
                                                                    Parameters::compThresName,
-                                                                   juce::NormalisableRange<float>(-24.0f, 0.0f, 0.1f),
+                                                                   juce::NormalisableRange<float>(Parameters::compThresMin, Parameters::compThresMax, 0.1f),
                                                                    Parameters::compThresDefault
                                                                    )
                        
@@ -166,17 +166,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                    Parameters::lifterTimeId,
                                                                    Parameters::lifterTimeName,
-                                                                   juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+                                                                   juce::NormalisableRange<float>(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.01f),
                                                                    Parameters::lifterTimeDefault
                                                                    )
                        );
     
     // Compressor time control -> Automatically adjusts attack/release times and make-up gain
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
-                                                                   Parameters::compressorTimeId,
-                                                                   Parameters::compressorTimeName,
-                                                                   juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
-                                                                   Parameters::compressorTimeDefault
+                                                                   Parameters::compTimeId,
+                                                                   Parameters::compTimeName,
+                                                                   juce::NormalisableRange<float>(Parameters::compTimeMin, Parameters::compTimeMax, 0.01f),
+                                                                   Parameters::compTimeDefault
                                                                    )
                        );
     
@@ -213,7 +213,7 @@ void PunkOTTProcessor::updateParameters()
     float sampleRate = (float) getSampleRate();
     
     // Lifter updates
-    const float rangedB = apvts.getRawParameterValue(Parameters::rangeId)->load();
+    const float rangedB = apvts.getRawParameterValue(Parameters::lifterThresId)->load();
     const float lifterMu = apvts.getRawParameterValue(Parameters::lifterTimeId)->load();
     const float lifterAttackMS = juce::jmap(lifterMu, 10.0f, 50.0f);
     const float lifterReleaseMS = juce::jmap(lifterMu, 200.0f, 30.0f);
@@ -231,7 +231,7 @@ void PunkOTTProcessor::updateParameters()
     
     // Compressor updates
     const float thresdB = apvts.getRawParameterValue(Parameters::compThresId)->load();
-    const float compressorMu = apvts.getRawParameterValue(Parameters::compressorTimeId)->load();
+    const float compressorMu = apvts.getRawParameterValue(Parameters::compTimeId)->load();
     const float compAttackMS = juce::jmap(compressorMu, 0.1f, 30.0f);
     const float compReleaseMS = juce::jmap(compressorMu, 10.0f, 100.0f);
     
