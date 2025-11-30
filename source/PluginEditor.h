@@ -36,7 +36,7 @@ private:
     juce::Label inputLabel, gateLabel, mixLabel, outputLabel;
     juce::Label lifterRangeLabel, lifterTimeLabel, compThresLabel, compTimeLabel, clipperLabel;
     
-    juce::TextButton clipperButton;
+    juce::TextButton clipperButton { "Clipper" };
     
     // Version
     juce::Label versionTag;

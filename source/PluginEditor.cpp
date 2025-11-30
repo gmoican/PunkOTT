@@ -4,7 +4,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     juce::ignoreUnused (processorRef);
-    // juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
+    juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
     
     // --- LAYOUT ---
     header.setColour (juce::TextButton::buttonColourId, juce::Colours::cornflowerblue);
@@ -188,19 +188,13 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
 
 PluginEditor::~PluginEditor()
 {
-    // juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+    juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
 }
 
 void PluginEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (UIColors::background);
-
-    // auto area = getLocalBounds();
-    // g.setColour (UIColors::text);
-    // g.setFont (16.0f);
-    // auto helloWorld = juce::String ("Hello from ") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " running in " + CMAKE_BUILD_TYPE;
-    // g.drawText (helloWorld, area.removeFromTop (150), juce::Justification::centred, false);
 }
 
 void PluginEditor::resized()
@@ -212,9 +206,10 @@ void PluginEditor::resized()
     
     // --- LAYOUT SETUP ---
     auto headerArea = area.removeFromTop(50);
-    auto footerArea = area.removeFromBottom(30);
     auto sideLArea = area.removeFromLeft(50);
     auto sideRArea = area.removeFromRight(50);
+    auto footerArea = area.removeFromBottom(30);
+    
     header.setBounds(headerArea);
     footer.setBounds(footerArea);
     sidebarLeft.setBounds(sideLArea);
@@ -277,5 +272,6 @@ void PluginEditor::resized()
     displayContainer.setBounds (area.removeFromTop (contentItemHeight * 2)
                                     .reduced(5)
                                 );
+    inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
 
 }

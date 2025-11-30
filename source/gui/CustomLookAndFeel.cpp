@@ -20,7 +20,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
                                          float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                                          juce::Slider& slider)
 {
-    auto radius = (float)juce::jmin(width / 2, height / 2) - 5.0f;
+    auto radius = (float)juce::jmin(width / 2, height / 2) - 4.0f;
     auto centreX = (float)x + (float)width * 0.5f;
     auto centreY = (float)y + (float)height * 0.5f;
     auto rx = centreX - radius;
@@ -47,14 +47,13 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     g.strokePath(valueArc, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
     // Draw thumb (indicator)
-    auto thumbWidth = 6.0f;
-    auto thumbHeight = radius * 0.5f;
-    g.setColour(UIColors::primary);
-
-    juce::Path thumb;
-    thumb.addEllipse(0.0f, 0.0f, thumbWidth, thumbHeight);
-    thumb.applyTransform(juce::AffineTransform::rotation(angle).translated(centreX, centreY));
-    g.fillPath(thumb);
+    juce::Path p;
+    auto pointerLength = radius * 0.5f;
+    auto pointerThickness = 2.0f;
+    p.addRectangle (-pointerThickness * 0.5f, -radius * 0.7f, pointerThickness, pointerLength);
+    p.applyTransform (juce::AffineTransform::rotation (angle).translated (centreX, centreY));
+    g.setColour (UIColors::primary);
+    g.fillPath (p);
 }
 
 void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height,
@@ -70,10 +69,22 @@ void CustomLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& bu
                                              bool shouldDrawButtonAsHighlighted,
                                              bool shouldDrawButtonAsDown)
 {
-    // Draw the button with rounded corners
-    juce::Rectangle<int> bounds = button.getBounds();
-    g.setColour(shouldDrawButtonAsDown ? UIColors::primary : backgroundColour);
-    g.fillRoundedRectangle(bounds.toFloat(), 6.0f);
+    juce::ignoreUnused(shouldDrawButtonAsDown);
+    
+    auto buttonArea = button.getLocalBounds();
+    auto edge = 4;
+    buttonArea.removeFromLeft (edge);
+    buttonArea.removeFromTop (edge);
+    g.setColour (shouldDrawButtonAsHighlighted ? UIColors::primary : backgroundColour);
+    g.fillRect (buttonArea);
+
+    // // Shadow
+    // g.setColour (juce::Colours::darkgrey.withAlpha (0.5f));
+    // g.fillRect (buttonArea);
+    // auto offset = shouldDrawButtonAsDown ? -edge / 2 : -edge;
+    // buttonArea.translate (offset, offset);
+    // g.setColour (backgroundColour);
+    // g.fillRect (buttonArea);
 }
 
 void CustomLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button,
@@ -81,6 +92,30 @@ void CustomLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& butt
                                        bool shouldDrawButtonAsDown)
 {
     // Set text color based on button state
-    g.setColour(shouldDrawButtonAsDown ? UIColors::background : UIColors::text);
-    g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, true);
+    // g.setColour(shouldDrawButtonAsDown ? UIColors::background : UIColors::text);
+    // g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, true);
+    juce::ignoreUnused(shouldDrawButtonAsHighlighted);
+    
+    auto font = getTextButtonFont (button, button.getHeight());
+    g.setFont (font);
+    g.setColour (button.findColour (button.getToggleState() ? juce::TextButton::textColourOnId
+                                                            : juce::TextButton::textColourOffId)
+                       .withMultipliedAlpha (button.isEnabled() ? 1.0f : 0.5f)
+                 );
+    auto yIndent = juce::jmin (4, button.proportionOfHeight (0.3f));
+    auto cornerSize = juce::jmin (button.getHeight(), button.getWidth()) / 2;
+    auto fontHeight = juce::roundToInt (font.getHeight() * 0.6f);
+    auto leftIndent = juce::jmin (fontHeight, 2 + cornerSize / (button.isConnectedOnLeft() ? 4 : 2));
+    auto rightIndent = juce::jmin (fontHeight, 2 + cornerSize / (button.isConnectedOnRight() ? 4 : 2));
+    auto textWidth = button.getWidth() - leftIndent - rightIndent;
+    auto edge = 4;
+    auto offset = shouldDrawButtonAsDown ? edge / 2 : 0;
+    if (textWidth > 0)
+        g.drawFittedText (button.getButtonText(),
+                          leftIndent + offset,
+                          yIndent + offset,
+                          textWidth,
+                          button.getHeight() - yIndent * 2 - edge,
+                          juce::Justification::centred,
+                          2);
 }
