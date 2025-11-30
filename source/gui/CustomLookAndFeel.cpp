@@ -16,10 +16,14 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(juce::ComboBox::textColourId, UIColors::text);
 }
 
+const juce::Identifier CustomLookAndFeel::disableHoverHighlightingID ("DisableHoverHighlighting");
+
 void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
                                          float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                                          juce::Slider& slider)
 {
+    juce::ignoreUnused(slider);
+    
     auto radius = (float)juce::jmin(width / 2, height / 2) - 4.0f;
     auto centreX = (float)x + (float)width * 0.5f;
     auto centreY = (float)y + (float)height * 0.5f;
@@ -71,29 +75,21 @@ void CustomLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& bu
 {
     juce::ignoreUnused(shouldDrawButtonAsDown);
     
+    bool shouldIgnoreHighlight = button.getProperties().getWithDefault(disableHoverHighlightingID, false);
+    bool actuallyHighlighted = shouldDrawButtonAsHighlighted && !shouldIgnoreHighlight;
+    
     auto buttonArea = button.getLocalBounds();
     auto edge = 4;
     buttonArea.removeFromLeft (edge);
     buttonArea.removeFromTop (edge);
-    g.setColour (shouldDrawButtonAsHighlighted ? UIColors::primary : backgroundColour);
+    g.setColour (actuallyHighlighted ? UIColors::primary : backgroundColour);
     g.fillRect (buttonArea);
-
-    // // Shadow
-    // g.setColour (juce::Colours::darkgrey.withAlpha (0.5f));
-    // g.fillRect (buttonArea);
-    // auto offset = shouldDrawButtonAsDown ? -edge / 2 : -edge;
-    // buttonArea.translate (offset, offset);
-    // g.setColour (backgroundColour);
-    // g.fillRect (buttonArea);
 }
 
 void CustomLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button,
                                        bool shouldDrawButtonAsHighlighted,
                                        bool shouldDrawButtonAsDown)
 {
-    // Set text color based on button state
-    // g.setColour(shouldDrawButtonAsDown ? UIColors::background : UIColors::text);
-    // g.drawText(button.getButtonText(), button.getLocalBounds(), juce::Justification::centred, true);
     juce::ignoreUnused(shouldDrawButtonAsHighlighted);
     
     auto font = getTextButtonFont (button, button.getHeight());

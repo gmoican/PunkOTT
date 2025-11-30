@@ -7,31 +7,38 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
     
     // --- LAYOUT ---
-    header.setColour (juce::TextButton::buttonColourId, juce::Colours::cornflowerblue);
+    header.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.5f));
+    header.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // header.setButtonText ("Header");
     addAndMakeVisible (header);
     
-    footer.setColour (juce::TextButton::buttonColourId, juce::Colours::cornflowerblue);
+    footer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.5f));
+    footer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // footer.setButtonText ("Footer");
     addAndMakeVisible (footer);
     
     sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    sidebarLeft.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // sidebarLeft.setButtonText ("Sidebar L");
     addAndMakeVisible (sidebarLeft);
     
     sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
+    sidebarRight.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // sidebarRight.setButtonText ("Sidebar R");
     addAndMakeVisible (sidebarRight);
     
-    lifterContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::lime);
+    lifterContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
+    lifterContainer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // lifterContainer.setButtonText("Lifter");
     addAndMakeVisible (lifterContainer);
     
-    compContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::yellowgreen);
+    compContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
+    compContainer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // compContainer.setButtonText("Comp");
     addAndMakeVisible (compContainer);
     
-    displayContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::orange);
+    displayContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
+    displayContainer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
     // displayContainer.setButtonText("Display");
     addAndMakeVisible (displayContainer);
     
@@ -153,11 +160,6 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     clipperButton.setClickingTogglesState(true);
     addAndMakeVisible(clipperButton);
     
-    clipperLabel.setText(Parameters::clipperName, juce::dontSendNotification);
-    clipperLabel.setJustificationType(juce::Justification::centred);
-    clipperLabel.setColour(juce::Label::textColourId, UIColors::text);
-    addAndMakeVisible(clipperLabel);
-    
     clipperAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, Parameters::clipperId, clipperButton);
     
     // Version tag
@@ -234,7 +236,6 @@ void PluginEditor::resized()
     clipperButton.setBounds(headerArea.removeFromRight(headerArea.getHeight())
                                       .reduced(10)
                             );
-    // clipperLabel.setBounds(400, 350, 50, 50);
     
     // --- LIFTER AND COMP CONTROLS ---
     auto contentItemHeight = 100;
@@ -252,26 +253,18 @@ void PluginEditor::resized()
     auto lifterSliderArea = lifterArea.reduced(10);
     lifterRangeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderArea.getWidth() / 2));
     lifterTimeSlider.setBounds(lifterSliderArea);
-    // lifterRangeSlider.setBounds(dynamicsArea.removeFromLeft(dynamicsArea.getWidth() / 2));
-    // // lifterRangeLabel.setBounds(100, 150, 80, 30);
-    //
-    // lifterTimeSlider.setBounds(dynamicsArea.removeFromLeft(dynamicsArea.getWidth() / 2));
-    // // lifterTimeLabel.setBounds(200, 150, 80, 30);
+    // lifterRangeLabel.setBounds(100, 150, 80, 30);
+    // lifterTimeLabel.setBounds(200, 150, 80, 30);
     
     // Position sliders inside comp container
     auto compSliderArea = compArea.reduced(10);
     compThresSlider.setBounds(compSliderArea.removeFromLeft(compSliderArea.getWidth() / 2));
     compTimeSlider.setBounds(compSliderArea);
-    // compThresSlider.setBounds(300, 100, 80, 80);
     // compThresLabel.setBounds(300, 150, 80, 30);
-    //
-    // compTimeSlider.setBounds(400, 100, 80, 80);
     // compTimeLabel.setBounds(400, 150, 80, 30);
     
     // --- DISPLAY ---
-    displayContainer.setBounds (area.removeFromTop (contentItemHeight * 2)
-                                    .reduced(5)
-                                );
+    displayContainer.setBounds (area.reduced(5));
     inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
 
 }

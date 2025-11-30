@@ -34,7 +34,7 @@ private:
     juce::Slider lifterRangeSlider, lifterTimeSlider, compThresSlider, compTimeSlider;
 
     juce::Label inputLabel, gateLabel, mixLabel, outputLabel;
-    juce::Label lifterRangeLabel, lifterTimeLabel, compThresLabel, compTimeLabel, clipperLabel;
+    juce::Label lifterRangeLabel, lifterTimeLabel, compThresLabel, compTimeLabel;
     
     juce::TextButton clipperButton { "Clipper" };
     

@@ -8,6 +8,8 @@ class CustomLookAndFeel : public juce::LookAndFeel_V4
 public:
     CustomLookAndFeel();
     
+    static const juce::Identifier disableHoverHighlightingID;
+    
     // Rotary slider
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
                           float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
