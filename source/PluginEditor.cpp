@@ -8,37 +8,37 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     // --- LAYOUT ---
     header.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.5f));
-    header.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    header.setEnabled(false);
     // header.setButtonText ("Header");
     addAndMakeVisible (header);
     
     footer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.5f));
-    footer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    footer.setEnabled(false);
     // footer.setButtonText ("Footer");
     addAndMakeVisible (footer);
     
-    sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
-    sidebarLeft.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::red);
+    sidebarLeft.setEnabled(false);
     // sidebarLeft.setButtonText ("Sidebar L");
     addAndMakeVisible (sidebarLeft);
     
-    sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::grey);
-    sidebarRight.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::red);
+    sidebarRight.setEnabled(false);
     // sidebarRight.setButtonText ("Sidebar R");
     addAndMakeVisible (sidebarRight);
     
     lifterContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
-    lifterContainer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    lifterContainer.setEnabled(false);
     // lifterContainer.setButtonText("Lifter");
     addAndMakeVisible (lifterContainer);
     
     compContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
-    compContainer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    compContainer.setEnabled(false);
     // compContainer.setButtonText("Comp");
     addAndMakeVisible (compContainer);
     
     displayContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
-    displayContainer.getProperties().set(CustomLookAndFeel::disableHoverHighlightingID, true);
+    displayContainer.setEnabled(false);
     // displayContainer.setButtonText("Display");
     addAndMakeVisible (displayContainer);
     
@@ -233,7 +233,7 @@ void PluginEditor::resized()
     mixSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
     // mixLabel.setBounds(410, 40, 50, 10);
     
-    clipperButton.setBounds(headerArea.removeFromRight(headerArea.getHeight())
+    clipperButton.setBounds(headerArea.removeFromRight(60)
                                       .reduced(10)
                             );
     

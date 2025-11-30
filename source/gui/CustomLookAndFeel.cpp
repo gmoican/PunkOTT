@@ -16,8 +16,6 @@ CustomLookAndFeel::CustomLookAndFeel()
     setColour(juce::ComboBox::textColourId, UIColors::text);
 }
 
-const juce::Identifier CustomLookAndFeel::disableHoverHighlightingID ("DisableHoverHighlighting");
-
 void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
                                          float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                                          juce::Slider& slider)
@@ -74,16 +72,10 @@ void CustomLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& bu
                                              bool shouldDrawButtonAsDown)
 {
     juce::ignoreUnused(shouldDrawButtonAsDown);
-    
-    bool shouldIgnoreHighlight = button.getProperties().getWithDefault(disableHoverHighlightingID, false);
-    bool actuallyHighlighted = shouldDrawButtonAsHighlighted && !shouldIgnoreHighlight;
-    
-    auto buttonArea = button.getLocalBounds();
-    auto edge = 4;
-    buttonArea.removeFromLeft (edge);
-    buttonArea.removeFromTop (edge);
-    g.setColour (actuallyHighlighted ? UIColors::primary : backgroundColour);
-    g.fillRect (buttonArea);
+        
+    auto buttonArea = button.getLocalBounds().toFloat();
+    g.setColour (shouldDrawButtonAsHighlighted ? UIColors::primary : backgroundColour);
+    g.fillRoundedRectangle(buttonArea, 7.0f);
 }
 
 void CustomLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& button,
