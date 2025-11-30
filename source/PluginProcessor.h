@@ -20,7 +20,7 @@ namespace Parameters
     constexpr auto inMax = 24.0f;
 
     constexpr auto gateId = "gate_thresh";
-    constexpr auto gateName = "Input Gate";
+    constexpr auto gateName = "Gate";
     constexpr auto gateDefault = -80.f;
     constexpr auto gateMin = -90.0f;
     constexpr auto gateMax = 0.0f;
@@ -40,7 +40,7 @@ namespace Parameters
     // ========== OTT PARAMETERS ===========
     // Comp: Determines the ceiling (in dB) for high-level signals to be compressed down
     constexpr auto compThresId = "comp";
-    constexpr auto compThresName = "Comp Threshold (dB)";
+    constexpr auto compThresName = "Comp";
     constexpr auto compThresDefault = -12.0f;
     constexpr auto compThresMin = -24.0f;
     constexpr auto compThresMax = 0.0f;
@@ -54,7 +54,7 @@ namespace Parameters
 
     // Lifter: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto lifterThresId = "lifter";
-    constexpr auto lifterThresName = "Lifter Thres (dB)";
+    constexpr auto lifterThresName = "Lift";
     constexpr auto lifterThresDefault = -40.0f;
     constexpr auto lifterThresMin = -80.0f;
     constexpr auto lifterThresMax = 0.0f;

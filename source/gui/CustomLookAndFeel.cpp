@@ -20,7 +20,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
                                          float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                                          juce::Slider& slider)
 {
-    juce::ignoreUnused(slider);
+    // juce::ignoreUnused(slider);
     
     auto radius = (float)juce::jmin(width / 2, height / 2) - 4.0f;
     auto centreX = (float)x + (float)width * 0.5f;
@@ -29,6 +29,9 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     auto ry = centreY - radius;
     auto rw = radius * 2.0f;
     auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+
+    // // Define the central area for text
+    // auto textBounds = juce::Rectangle<int>(x, y, width, height).reduced(width/4, height/4).toFloat();
 
     // Draw background circle
     g.setColour(UIColors::secondary.withAlpha(0.3f));
@@ -48,14 +51,41 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
                            rotaryStartAngle, angle, true);
     g.strokePath(valueArc, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-    // Draw thumb (indicator)
-    juce::Path p;
-    auto pointerLength = radius * 0.5f;
-    auto pointerThickness = 2.0f;
-    p.addRectangle (-pointerThickness * 0.5f, -radius * 0.7f, pointerThickness, pointerLength);
-    p.applyTransform (juce::AffineTransform::rotation (angle).translated (centreX, centreY));
-    g.setColour (UIColors::primary);
-    g.fillPath (p);
+    // // Draw thumb (indicator)
+    // juce::Path p;
+    // auto pointerLength = radius * 0.5f;
+    // auto pointerThickness = 2.0f;
+    // p.addRectangle (-pointerThickness * 0.5f, -radius * 0.7f, pointerThickness, pointerLength);
+    // p.applyTransform (juce::AffineTransform::rotation (angle).translated (centreX, centreY));
+    // g.setColour (UIColors::primary);
+    // g.fillPath (p);
+    
+    // 5. Draw Dynamic Text Label/Value
+    // Define the central area for text
+    auto textBounds = juce::Rectangle<int>(x, y, width, height).reduced(width/4, height/4).toFloat();
+    
+    juce::String textToDisplay;
+    float fontSize = radius * 0.7f;
+    
+    // Check if the user is dragging or hovering
+    if (slider.isMouseButtonDown() || slider.isMouseOver())
+    {
+        // Display the current value
+        textToDisplay = slider.getTextFromValue(slider.getValue());
+    }
+    else
+    {
+        textToDisplay = slider.getName();
+    }
+    
+    g.setColour(UIColors::text);
+    g.setFont(juce::FontOptions(fontSize));
+    
+    // Draw the text in the center of the knob
+    g.drawFittedText(textToDisplay,
+                     textBounds.toNearestInt(),
+                     juce::Justification::centred,
+                     1);
 }
 
 void CustomLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height,
