@@ -3,10 +3,6 @@
 PluginEditor::PluginEditor (PunkOTTProcessor& p)
     : AudioProcessorEditor (&p),
       processorRef (p)
-      // inLeftMeter(p),
-      // inRightMeter(p),
-      // outLeftMeter(p),
-      // outRightMeter(p)
 {
     juce::ignoreUnused (processorRef);
     juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
@@ -135,11 +131,29 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     clipperAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, Parameters::clipperId, clipperButton);
     
-    // Level Meters
-    // addAndMakeVisible(inLeftMeter);
-    // addAndMakeVisible(inRightMeter);
-    // addAndMakeVisible(outLeftMeter);
-    // addAndMakeVisible(outRightMeter);
+    // Level Meters - Create meters based on channel count
+    int numInputChannels = processorRef.getTotalNumInputChannels();
+    int numOutputChannels = processorRef.getTotalNumOutputChannels();
+    
+    // Input meters
+    inputLeftMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsInputLeft, "L");
+    addAndMakeVisible(*inputLeftMeter);
+    
+    if (numInputChannels > 1)
+    {
+        inputRightMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsInputRight, "R");
+        addAndMakeVisible(*inputRightMeter);
+    }
+    
+    // Output meters
+    outputLeftMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsOutputLeft, "L");
+    addAndMakeVisible(*outputLeftMeter);
+    
+    if (numOutputChannels > 1)
+    {
+        outputRightMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsOutputRight, "R");
+        addAndMakeVisible(*outputRightMeter);
+    }
     
     // Version tag
     versionTag.setText(juce::String ("") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " by @punkarra4",
@@ -161,9 +175,6 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
 
         inspector->setVisible (true);
     };
-
-    // Timer in Hertz
-    startTimerHz(30);
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -173,20 +184,6 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
 PluginEditor::~PluginEditor()
 {
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
-}
-
-void PluginEditor::timerCallback()
-{
-    // inLeftMeter.setLevel(processorRef.levelMeters.rmsInputLeft.load());
-    // inRightMeter.setLevel(processorRef.levelMeters.rmsInputRight.load());
-    // outLeftMeter.setLevel(processorRef.levelMeters.rmsOutputLeft.load());
-    // outRightMeter.setLevel(processorRef.levelMeters.rmsOutputRight.load());
-    
-    // TODO: FIX
-    // inLeftMeter.repaint();
-    // inRightMeter.repaint();
-    // outLeftMeter.repaint();
-    // outRightMeter.repaint();
 }
 
 void PluginEditor::paint (juce::Graphics& g)
@@ -204,8 +201,8 @@ void PluginEditor::resized()
     
     // --- LAYOUT SETUP ---
     auto headerArea = area.removeFromTop(50);
-    auto sideLArea = area.removeFromLeft(50);
-    auto sideRArea = area.removeFromRight(50);
+    auto sideLArea = area.removeFromLeft(40);
+    auto sideRArea = area.removeFromRight(40);
     auto footerArea = area.removeFromBottom(30);
     
     header.setBounds(headerArea);
@@ -218,6 +215,43 @@ void PluginEditor::resized()
     // inRightMeter.setBounds(sideLArea.removeFromLeft(sideLArea.getHeight()));
     // outLeftMeter.setBounds(sideRArea.removeFromLeft(sideRArea.getHeight()));
     // outRightMeter.setBounds(sideRArea.removeFromLeft(sideRArea.getHeight()));
+    // --- INPUT METERS ---
+    int numInputChannels = processorRef.getTotalNumInputChannels();
+    
+    if (numInputChannels == 1)
+    {
+        // Single input channel - meter takes full height
+        if (inputLeftMeter)
+            inputLeftMeter->setBounds(sideLArea.reduced(8));
+    }
+    else if (numInputChannels > 1)
+    {
+        // Stereo input - split height in half
+        auto leftHalf = sideLArea.removeFromLeft(sideLArea.getWidth() / 2);
+        if (inputLeftMeter)
+            inputLeftMeter->setBounds(leftHalf.reduced(8));
+        if (inputRightMeter)
+            inputRightMeter->setBounds(sideLArea.reduced(8));
+    }
+    
+    // --- OUTPUT METERS ---
+    int numOutputChannels = processorRef.getTotalNumOutputChannels();
+    
+    if (numOutputChannels == 1)
+    {
+        // Single output channel - meter takes full height
+        if (outputLeftMeter)
+            outputLeftMeter->setBounds(sideRArea.reduced(8));
+    }
+    else if (numOutputChannels > 1)
+    {
+        // Stereo output - split height in half
+        auto leftHalf = sideRArea.removeFromLeft(sideRArea.getWidth() / 2);
+        if (outputLeftMeter)
+            outputLeftMeter->setBounds(leftHalf.reduced(8));
+        if (outputRightMeter)
+            outputRightMeter->setBounds(sideRArea.reduced(8));
+    }
     
     // --- FOOTER ---
     versionTag.setBounds(footerArea);
