@@ -3,16 +3,18 @@
 #include "PluginProcessor.h"
 // #include "BinaryData.h"
 #include "gui/CustomLookAndFeel.h"
+// #include "gui/LevelMeter.h"
 #include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
-class PluginEditor : public juce::AudioProcessorEditor
+class PluginEditor : public juce::AudioProcessorEditor, public juce::Timer
 {
 public:
     explicit PluginEditor (PunkOTTProcessor&);
     ~PluginEditor() override;
 
     //==============================================================================
+    void timerCallback() override;
     void paint (juce::Graphics&) override;
     void resized() override;
 
@@ -34,6 +36,9 @@ private:
     juce::Slider lifterRangeSlider, lifterTimeSlider, compThresSlider, compTimeSlider;
     
     juce::TextButton clipperButton { "Clip" };
+    
+    // Level Meters TODO: FIX
+    // LevelMeter inLeftMeter, inRightMeter, outLeftMeter, outRightMeter;
     
     // Version
     juce::Label versionTag;

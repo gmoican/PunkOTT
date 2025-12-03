@@ -1,7 +1,12 @@
 #include "PluginEditor.h"
 
 PluginEditor::PluginEditor (PunkOTTProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p)
+    : AudioProcessorEditor (&p),
+      processorRef (p)
+      // inLeftMeter(p),
+      // inRightMeter(p),
+      // outLeftMeter(p),
+      // outRightMeter(p)
 {
     juce::ignoreUnused (processorRef);
     juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
@@ -17,12 +22,12 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // footer.setButtonText ("Footer");
     addAndMakeVisible (footer);
     
-    sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::red);
+    sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::red.withAlpha(0.25f));
     sidebarLeft.setEnabled(false);
     // sidebarLeft.setButtonText ("Sidebar L");
     addAndMakeVisible (sidebarLeft);
     
-    sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::red);
+    sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::red.withAlpha(0.25f));
     sidebarRight.setEnabled(false);
     // sidebarRight.setButtonText ("Sidebar R");
     addAndMakeVisible (sidebarRight);
@@ -37,7 +42,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // compContainer.setButtonText("Comp");
     addAndMakeVisible (compContainer);
     
-    displayContainer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
+    displayContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::red.withAlpha(0.25f));
     displayContainer.setEnabled(false);
     // displayContainer.setButtonText("Display");
     addAndMakeVisible (displayContainer);
@@ -130,6 +135,12 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     clipperAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, Parameters::clipperId, clipperButton);
     
+    // Level Meters
+    // addAndMakeVisible(inLeftMeter);
+    // addAndMakeVisible(inRightMeter);
+    // addAndMakeVisible(outLeftMeter);
+    // addAndMakeVisible(outRightMeter);
+    
     // Version tag
     versionTag.setText(juce::String ("") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " by @punkarra4",
                        juce::dontSendNotification);
@@ -151,6 +162,9 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
         inspector->setVisible (true);
     };
 
+    // Timer in Hertz
+    startTimerHz(30);
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (520, 410);
@@ -159,6 +173,20 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
 PluginEditor::~PluginEditor()
 {
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+}
+
+void PluginEditor::timerCallback()
+{
+    // inLeftMeter.setLevel(processorRef.levelMeters.rmsInputLeft.load());
+    // inRightMeter.setLevel(processorRef.levelMeters.rmsInputRight.load());
+    // outLeftMeter.setLevel(processorRef.levelMeters.rmsOutputLeft.load());
+    // outRightMeter.setLevel(processorRef.levelMeters.rmsOutputRight.load());
+    
+    // TODO: FIX
+    // inLeftMeter.repaint();
+    // inRightMeter.repaint();
+    // outLeftMeter.repaint();
+    // outRightMeter.repaint();
 }
 
 void PluginEditor::paint (juce::Graphics& g)
@@ -185,21 +213,23 @@ void PluginEditor::resized()
     sidebarLeft.setBounds(sideLArea);
     sidebarRight.setBounds(sideRArea);
     
+    // // --- LEVEL METERS --- TODO: FIX
+    // inLeftMeter.setBounds(sideLArea.removeFromLeft(sideLArea.getHeight()));
+    // inRightMeter.setBounds(sideLArea.removeFromLeft(sideLArea.getHeight()));
+    // outLeftMeter.setBounds(sideRArea.removeFromLeft(sideRArea.getHeight()));
+    // outRightMeter.setBounds(sideRArea.removeFromLeft(sideRArea.getHeight()));
+    
     // --- FOOTER ---
     versionTag.setBounds(footerArea);
     
     // --- HEADER CONTROLS ---
     inputSlider.setBounds(headerArea.removeFromLeft(headerArea.getHeight()));
-    // inputLabel.setBounds(5, 40, 50, 10);
     
     gateSlider.setBounds(headerArea.removeFromLeft(headerArea.getHeight()));
-    // gateLabel.setBounds(60, 40, 50, 10);
     
     outputSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
-    // outputLabel.setBounds(465, 40, 50, 10);
     
     mixSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
-    // mixLabel.setBounds(410, 40, 50, 10);
     
     clipperButton.setBounds(headerArea.removeFromRight(60)
                                       .reduced(10)
@@ -226,8 +256,6 @@ void PluginEditor::resized()
     auto compSliderArea = compArea.reduced(10);
     compThresSlider.setBounds(compSliderArea.removeFromLeft(compSliderArea.getWidth() / 2));
     compTimeSlider.setBounds(compSliderArea);
-    // compThresLabel.setBounds(300, 150, 80, 30);
-    // compTimeLabel.setBounds(400, 150, 80, 30);
     
     // --- DISPLAY ---
     displayContainer.setBounds (area.reduced(5));

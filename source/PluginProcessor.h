@@ -72,6 +72,15 @@ namespace Parameters
     constexpr auto clipperDefault = false;
 }
 
+// GUI Level Meters
+struct LevelMeters
+{
+    std::atomic<float> rmsInputLeft { -100.0f};
+    std::atomic<float> rmsInputRight { -100.0f};
+    std::atomic<float> rmsOutputLeft { -100.0f};
+    std::atomic<float> rmsOutputRight { -100.0f};
+};
+
 class PunkOTTProcessor : public juce::AudioProcessor
 {
 public:
@@ -105,8 +114,11 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    // MY STUFF ====================================================================
+    // ===== MY STUFF ===============================================================
     juce::AudioProcessorValueTreeState apvts;
+    
+    // GUI Level Meters
+    LevelMeters levelMeters;
     
     void updateParameters();
 

@@ -311,6 +311,12 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Update params - TODO: this has to be triggered by a listener in the final version
     updateParameters();
     
+    //GUI - Input level meters
+    if (totalNumInputChannels > 0)
+        levelMeters.rmsInputLeft.store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(0, 0, buffer.getNumSamples())));
+    if (totalNumInputChannels > 1)
+        levelMeters.rmsInputRight.store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(1, 0, buffer.getNumSamples())));
+    
     // 0. Buffer copy
     compressedBuffer.makeCopyOf(buffer);
     
@@ -332,6 +338,12 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.addFrom(i, 0, compressedBuffer, i, 0, buffer.getNumSamples());
     
     buffer.applyGain(outGain);
+    
+    // GUI - Output level meters
+    if (totalNumOutputChannels > 0)
+        levelMeters.rmsOutputLeft.store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(0, 0, buffer.getNumSamples())));
+    if (totalNumOutputChannels > 1)
+        levelMeters.rmsOutputRight.store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(1, 0, buffer.getNumSamples())));
 }
 
 //==============================================================================
