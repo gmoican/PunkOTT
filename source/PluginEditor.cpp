@@ -18,12 +18,12 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // footer.setButtonText ("Footer");
     addAndMakeVisible (footer);
     
-    sidebarLeft.setColour (juce::TextButton::buttonColourId, juce::Colours::red.withAlpha(0.25f));
+    sidebarLeft.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
     sidebarLeft.setEnabled(false);
     // sidebarLeft.setButtonText ("Sidebar L");
     addAndMakeVisible (sidebarLeft);
     
-    sidebarRight.setColour (juce::TextButton::buttonColourId, juce::Colours::red.withAlpha(0.25f));
+    sidebarRight.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.25f));
     sidebarRight.setEnabled(false);
     // sidebarRight.setButtonText ("Sidebar R");
     addAndMakeVisible (sidebarRight);
@@ -200,9 +200,9 @@ void PluginEditor::resized()
     // inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
     
     // --- LAYOUT SETUP ---
-    auto headerArea = area.removeFromTop(50);
-    auto sideLArea = area.removeFromLeft(40);
-    auto sideRArea = area.removeFromRight(40);
+    auto headerArea = area.removeFromTop((int)(area.getHeight() * 0.12f));
+    auto sideLArea = area.removeFromLeft((int)(area.getWidth() * 0.08f));
+    auto sideRArea = area.removeFromRight((int)(area.getWidth() * 0.08f));
     auto footerArea = area.removeFromBottom(30);
     
     header.setBounds(headerArea);
@@ -210,11 +210,7 @@ void PluginEditor::resized()
     sidebarLeft.setBounds(sideLArea);
     sidebarRight.setBounds(sideRArea);
     
-    // // --- LEVEL METERS --- TODO: FIX
-    // inLeftMeter.setBounds(sideLArea.removeFromLeft(sideLArea.getHeight()));
-    // inRightMeter.setBounds(sideLArea.removeFromLeft(sideLArea.getHeight()));
-    // outLeftMeter.setBounds(sideRArea.removeFromLeft(sideRArea.getHeight()));
-    // outRightMeter.setBounds(sideRArea.removeFromLeft(sideRArea.getHeight()));
+    // // --- LEVEL METERS ---
     // --- INPUT METERS ---
     int numInputChannels = processorRef.getTotalNumInputChannels();
     
@@ -222,16 +218,16 @@ void PluginEditor::resized()
     {
         // Single input channel - meter takes full height
         if (inputLeftMeter)
-            inputLeftMeter->setBounds(sideLArea.reduced(8));
+            inputLeftMeter->setBounds(sideLArea.reduced( (int)(sideLArea.getWidth() * 0.35f) ));
     }
     else if (numInputChannels > 1)
     {
         // Stereo input - split height in half
         auto leftHalf = sideLArea.removeFromLeft(sideLArea.getWidth() / 2);
         if (inputLeftMeter)
-            inputLeftMeter->setBounds(leftHalf.reduced(8));
+            inputLeftMeter->setBounds(leftHalf.reduced( (int)(leftHalf.getWidth() * 0.35f) ));
         if (inputRightMeter)
-            inputRightMeter->setBounds(sideLArea.reduced(8));
+            inputRightMeter->setBounds(sideLArea.reduced( (int)(sideLArea.getWidth() * 0.35f) ));
     }
     
     // --- OUTPUT METERS ---
@@ -241,16 +237,16 @@ void PluginEditor::resized()
     {
         // Single output channel - meter takes full height
         if (outputLeftMeter)
-            outputLeftMeter->setBounds(sideRArea.reduced(8));
+            outputLeftMeter->setBounds(sideRArea.reduced( (int)(sideRArea.getWidth() * 0.35f) ));
     }
     else if (numOutputChannels > 1)
     {
         // Stereo output - split height in half
         auto leftHalf = sideRArea.removeFromLeft(sideRArea.getWidth() / 2);
         if (outputLeftMeter)
-            outputLeftMeter->setBounds(leftHalf.reduced(8));
+            outputLeftMeter->setBounds(leftHalf.reduced( (int)(leftHalf.getWidth() * 0.35f) ));
         if (outputRightMeter)
-            outputRightMeter->setBounds(sideRArea.reduced(8));
+            outputRightMeter->setBounds(sideRArea.reduced( (int)(sideRArea.getWidth() * 0.35f) ));
     }
     
     // --- FOOTER ---
