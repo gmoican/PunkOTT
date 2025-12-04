@@ -25,12 +25,6 @@ namespace Parameters
     constexpr auto gateMin = -90.0f;
     constexpr auto gateMax = 0.0f;
 
-    constexpr auto mixId = "mix";
-    constexpr auto mixName = "Mix";
-    constexpr auto mixDefault = 100.f;
-    constexpr auto mixMin = 0.0f;
-    constexpr auto mixMax = 100.0f;
-
     constexpr auto outId = "out_gain";
     constexpr auto outName = "Output Gain (dB)";
     constexpr auto outDefault = 0.f;
@@ -40,7 +34,7 @@ namespace Parameters
     // ========== OTT PARAMETERS ===========
     // Comp: Determines the ceiling (in dB) for high-level signals to be compressed down
     constexpr auto compThresId = "comp";
-    constexpr auto compThresName = "Comp";
+    constexpr auto compThresName = "Compressor Threshold";
     constexpr auto compThresDefault = -12.0f;
     constexpr auto compThresMin = -24.0f;
     constexpr auto compThresMax = 0.0f;
@@ -52,9 +46,16 @@ namespace Parameters
     constexpr auto compTimeMin = 0.0f;
     constexpr auto compTimeMax = 1.0f;
 
+    // Comp mix control
+    constexpr auto compMixId = "compMix";
+    constexpr auto compMixName = "Comp Mix";
+    constexpr auto compMixDefault = 100.f;
+    constexpr auto compMixMin = 0.0f;
+    constexpr auto compMixMax = 100.0f;
+
     // Lifter: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto lifterThresId = "lifter";
-    constexpr auto lifterThresName = "Lift";
+    constexpr auto lifterThresName = "Lifter Range";
     constexpr auto lifterThresDefault = -40.0f;
     constexpr auto lifterThresMin = -80.0f;
     constexpr auto lifterThresMax = 0.0f;
@@ -66,6 +67,13 @@ namespace Parameters
     constexpr auto lifterTimeMin = 0.0f;
     constexpr auto lifterTimeMax = 1.0f;
 
+    // Lifter mix control
+    constexpr auto lifterMixId = "lifterMix";
+    constexpr auto lifterMixName = "Lifter Mix";
+    constexpr auto lifterMixDefault = 100.f;
+    constexpr auto lifterMixMin = 0.0f;
+    constexpr auto lifterMixMax = 100.0f;
+
     // Clipper: Applies a soft-clipping function after the dynamics processing
     constexpr auto clipperId = "clipper";
     constexpr auto clipperName = "Clipper";
@@ -75,10 +83,10 @@ namespace Parameters
 // GUI Level Meters
 struct LevelMeters
 {
-    std::atomic<float> rmsInputLeft { -100.0f};
-    std::atomic<float> rmsInputRight { -100.0f};
-    std::atomic<float> rmsOutputLeft { -100.0f};
-    std::atomic<float> rmsOutputRight { -100.0f};
+    std::atomic<float> rmsInputLeft { -100.0f };
+    std::atomic<float> rmsInputRight { -100.0f };
+    std::atomic<float> rmsOutputLeft { -100.0f };
+    std::atomic<float> rmsOutputRight { -100.0f };
 };
 
 class PunkOTTProcessor : public juce::AudioProcessor
@@ -128,7 +136,6 @@ private:
     // --- INTERNAL PARAMETER HANDLING ---
     // Utilities
     float inGain = 1.0f;
-    float wetMix = 1.0f;
     float outGain = 1.0f;
     Gate gate;
     
@@ -138,10 +145,6 @@ private:
     
     Clipper clipper;
     bool clipperState = false;
-
-    // Temporary storage for the wet (compressed) signal.
-    // Needed to calculate the wet/dry mix using the dry signal from the input buffer.
-    juce::AudioBuffer<float> compressedBuffer;
     
     // =============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PunkOTTProcessor)

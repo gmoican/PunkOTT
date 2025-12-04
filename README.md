@@ -14,7 +14,6 @@ The original OTT compressor was developed in Ableton Live's Multiband Dynamics a
 This is plugin is still under development. Here are some things I want to achieve before I conclude this mini project:
 * **DSP**:
     * _BUG:_ Lifter class is producing some annoying clips after silences.
-    * _Mix_ parameter would better apply independently to the Lifter processor and the Compressor processor than to the sum of both processors.
     * APVTS listeners.
 * **GUI**:
     * _BUG:_ Level meters are messed up when plugin is instantiated in mono.

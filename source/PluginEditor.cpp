@@ -64,16 +64,6 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     gateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::gateId, gateSlider);
     
-    // Mix knob
-    mixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    mixSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    mixSlider.setRange(Parameters::mixMin, Parameters::mixMax, 0.1);
-    mixSlider.setValue(Parameters::mixDefault);
-    mixSlider.setName(Parameters::mixName);
-    addAndMakeVisible(mixSlider);
-    
-    mixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::mixId, mixSlider);
-    
     // Output knob
     outputSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     outputSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
@@ -84,13 +74,13 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     outputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::outId, outputSlider);
 
-    // --- DYNAMIC PARAMETERS ---
+    // --- LIFTER PARAMETERS ---
     // Lifter-range knob
     lifterRangeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     lifterRangeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     lifterRangeSlider.setRange(Parameters::lifterThresMin, Parameters::lifterThresMax, 0.1);
     lifterRangeSlider.setValue(Parameters::lifterThresDefault);
-    lifterRangeSlider.setName(Parameters::lifterThresName);
+    lifterRangeSlider.setName("Lift");
     addAndMakeVisible(lifterRangeSlider);
     
     lifterRangeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterThresId, lifterRangeSlider);
@@ -98,19 +88,30 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // Lifter-time knob
     lifterTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     lifterTimeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    lifterTimeSlider.setRange(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.1);
+    lifterTimeSlider.setRange(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.01);
     lifterTimeSlider.setValue(Parameters::lifterTimeDefault);
     lifterTimeSlider.setName(u8"β");
     addAndMakeVisible(lifterTimeSlider);
     
     lifterTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterTimeId, lifterTimeSlider);
+    
+    // Mix knob
+    lifterMixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    lifterMixSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    lifterMixSlider.setRange(Parameters::lifterMixMin, Parameters::lifterMixMax, 0.01);
+    lifterMixSlider.setValue(Parameters::lifterMixDefault);
+    lifterMixSlider.setName("Mix");
+    addAndMakeVisible(lifterMixSlider);
+    
+    lifterMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterMixId, lifterMixSlider);
 
+    // --- COMPRESSOR PARAMETERS ---
     // Comp-thres knob
     compThresSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     compThresSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     compThresSlider.setRange(Parameters::compThresMin, Parameters::compThresMax, 0.1);
     compThresSlider.setValue(Parameters::compThresDefault);
-    compThresSlider.setName(Parameters::compThresName);
+    compThresSlider.setName("Comp");
     addAndMakeVisible(compThresSlider);
     
     compThresAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compThresId, compThresSlider);
@@ -118,19 +119,31 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // Comp-time knob
     compTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     compTimeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    compTimeSlider.setRange(Parameters::compTimeMin, Parameters::compTimeMax, 0.1);
+    compTimeSlider.setRange(Parameters::compTimeMin, Parameters::compTimeMax, 0.01);
     compTimeSlider.setValue(Parameters::compTimeDefault);
     compTimeSlider.setName(u8"α");
     addAndMakeVisible(compTimeSlider);
     
     compTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compTimeId, compTimeSlider);
     
+    // Mix knob
+    compMixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    compMixSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    compMixSlider.setRange(Parameters::compMixMin, Parameters::compMixMax, 0.01);
+    compMixSlider.setValue(Parameters::compMixDefault);
+    compMixSlider.setName("Mix");
+    addAndMakeVisible(compMixSlider);
+    
+    compMixAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compMixId, compMixSlider);
+    
+    // --- CLIPPER ---
     // Clipper button
     clipperButton.setClickingTogglesState(true);
     addAndMakeVisible(clipperButton);
     
     clipperAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.apvts, Parameters::clipperId, clipperButton);
     
+    // --- LEVEL METERS ---
     // Level Meters - Create meters based on channel count
     int numInputChannels = processorRef.getTotalNumInputChannels();
     int numOutputChannels = processorRef.getTotalNumOutputChannels();
@@ -155,6 +168,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
         addAndMakeVisible(*outputRightMeter);
     }
     
+    // --- VERSION ---
     // Version tag
     versionTag.setText(juce::String ("") + PRODUCT_NAME_WITHOUT_VERSION + " v" VERSION + " by @punkarra4",
                        juce::dontSendNotification);
@@ -178,8 +192,10 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (520, 410);
+    setResizable(true, true);
+    getConstrainer()->setFixedAspectRatio(1.2683);
     setResizeLimits(520, 410, 1040, 820);
+    setSize (520, 410);
 }
 
 PluginEditor::~PluginEditor()
@@ -197,8 +213,6 @@ void PluginEditor::resized()
 {
     // layout the positions of your child components here
     auto area = getLocalBounds();
-    // area.removeFromBottom(50);
-    // inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
     
     // --- LAYOUT SETUP ---
     auto headerArea = area.removeFromTop((int)(area.getHeight() * 0.12f));
@@ -260,10 +274,8 @@ void PluginEditor::resized()
     
     outputSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
     
-    mixSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
-    
-    clipperButton.setBounds(headerArea.removeFromRight(60)
-                                      .reduced(10)
+    clipperButton.setBounds(headerArea.removeFromRight(80)
+                                      .reduced(0, 15)
                             );
     
     // --- LIFTER AND COMP CONTROLS ---
@@ -280,13 +292,19 @@ void PluginEditor::resized()
     
     // Position sliders inside lifter container
     auto lifterSliderArea = lifterArea.reduced(10);
-    lifterRangeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderArea.getWidth() / 2));
-    lifterTimeSlider.setBounds(lifterSliderArea);
+    auto lifterSliderWidth = lifterSliderArea.getWidth() / 3;
+    
+    lifterRangeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderWidth));
+    lifterTimeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderWidth));
+    lifterMixSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderWidth));
     
     // Position sliders inside comp container
     auto compSliderArea = compArea.reduced(10);
-    compThresSlider.setBounds(compSliderArea.removeFromLeft(compSliderArea.getWidth() / 2));
-    compTimeSlider.setBounds(compSliderArea);
+    auto compSliderWidth = compSliderArea.getWidth() / 3;
+    
+    compThresSlider.setBounds(compSliderArea.removeFromLeft(compSliderWidth));
+    compTimeSlider.setBounds(compSliderArea.removeFromLeft(compSliderWidth));
+    compMixSlider.setBounds(compSliderArea.removeFromLeft(compSliderWidth));
     
     // --- DISPLAY ---
     displayContainer.setBounds (area.reduced(5));

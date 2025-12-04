@@ -31,8 +31,9 @@ private:
     juce::TextButton header, sidebarLeft, sidebarRight, lifterContainer, compContainer, displayContainer, footer;
     
     // Sliders - Rotary knobs
-    juce::Slider inputSlider, gateSlider, mixSlider, outputSlider;
-    juce::Slider lifterRangeSlider, lifterTimeSlider, compThresSlider, compTimeSlider;
+    juce::Slider inputSlider, gateSlider, outputSlider;
+    juce::Slider lifterRangeSlider, lifterTimeSlider, lifterMixSlider;
+    juce::Slider compThresSlider, compTimeSlider, compMixSlider;
     
     juce::TextButton clipperButton { "Clip" };
     
@@ -47,7 +48,7 @@ private:
     
     // Attachments for linking sliders-parameters
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputAttachment, gateAttachment, mixAttachment, outputAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lifterRangeAttachment, lifterTimeAttachment, compThresAttachment, compTimeAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lifterRangeAttachment, lifterTimeAttachment, lifterMixAttachment, compThresAttachment, compTimeAttachment, compMixAttachment;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> clipperAttachment;
     
