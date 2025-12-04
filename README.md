@@ -1,5 +1,5 @@
 # PunkOTT
- [![PunkOTT](https://github.com/gmoican/PunkOTT/actions/workflows/main.yml/badge.svg)](https://github.com/gmoican/PunkOTT/actions/workflows/main.yml)
+ [![PunkOTT](https://github.com/gmoican/PunkOTT/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/gmoican/PunkOTT/actions/workflows/build_and_test.yml)
 
 ![DemoImage](docs/images/demo.png)
 
