@@ -17,7 +17,6 @@ This is plugin is still under development. Here are some things I want to achiev
     * APVTS listeners.
 * **GUI**:
     * _BUG:_ Level meters are messed up when plugin is instantiated in mono.
-    * Resizeable layout. Right now, only some parts of the plugin window adjust when resizing...
     * Audio waveform visualizer. This is not really needed, but I want a fancy way of displaying how the plugin affects the signal.
 * **Multiplatform availability**:
     * When I finish with the previous requirements, I will work on the `build.yml` file for building the plugin with GitHub Actions.

@@ -279,7 +279,7 @@ void PluginEditor::resized()
                             );
     
     // --- LIFTER AND COMP CONTROLS ---
-    auto contentItemHeight = 100;
+    auto contentItemHeight = area.getHeight() / 2.5;
     // Reserve the top area for lifter and comp containers
     auto topArea = area.removeFromTop(contentItemHeight);
     

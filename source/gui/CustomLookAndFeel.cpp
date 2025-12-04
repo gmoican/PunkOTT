@@ -65,7 +65,7 @@ void CustomLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int wi
     auto textBounds = juce::Rectangle<int>(x, y, width, height).reduced(width/4, height/4).toFloat();
     
     juce::String textToDisplay;
-    float fontSize = radius * 0.7f;
+    float fontSize = juce::jmin(radius * 0.7f, 24.0f);
     
     // Check if the user is dragging or hovering
     if (slider.isMouseButtonDown() || slider.isMouseOver())
