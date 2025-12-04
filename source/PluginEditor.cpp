@@ -136,22 +136,22 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     int numOutputChannels = processorRef.getTotalNumOutputChannels();
     
     // Input meters
-    inputLeftMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsInputLeft, "L");
+    inputLeftMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsInputLeft, "In L");
     addAndMakeVisible(*inputLeftMeter);
     
     if (numInputChannels > 1)
     {
-        inputRightMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsInputRight, "R");
+        inputRightMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsInputRight, "In R");
         addAndMakeVisible(*inputRightMeter);
     }
     
     // Output meters
-    outputLeftMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsOutputLeft, "L");
+    outputLeftMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsOutputLeft, "Out L");
     addAndMakeVisible(*outputLeftMeter);
     
     if (numOutputChannels > 1)
     {
-        outputRightMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsOutputRight, "R");
+        outputRightMeter = std::make_unique<LevelMeter>(&processorRef.levelMeters.rmsOutputRight, "Out R");
         addAndMakeVisible(*outputRightMeter);
     }
     
@@ -179,6 +179,7 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (520, 410);
+    setResizeLimits(520, 410, 1040, 820);
 }
 
 PluginEditor::~PluginEditor()
@@ -218,16 +219,16 @@ void PluginEditor::resized()
     {
         // Single input channel - meter takes full height
         if (inputLeftMeter)
-            inputLeftMeter->setBounds(sideLArea.reduced( (int)(sideLArea.getWidth() * 0.35f) ));
+            inputLeftMeter->setBounds(sideLArea);
     }
     else if (numInputChannels > 1)
     {
         // Stereo input - split height in half
         auto leftHalf = sideLArea.removeFromLeft(sideLArea.getWidth() / 2);
         if (inputLeftMeter)
-            inputLeftMeter->setBounds(leftHalf.reduced( (int)(leftHalf.getWidth() * 0.35f) ));
+            inputLeftMeter->setBounds(leftHalf);
         if (inputRightMeter)
-            inputRightMeter->setBounds(sideLArea.reduced( (int)(sideLArea.getWidth() * 0.35f) ));
+            inputRightMeter->setBounds(sideLArea);
     }
     
     // --- OUTPUT METERS ---
@@ -237,16 +238,16 @@ void PluginEditor::resized()
     {
         // Single output channel - meter takes full height
         if (outputLeftMeter)
-            outputLeftMeter->setBounds(sideRArea.reduced( (int)(sideRArea.getWidth() * 0.35f) ));
+            outputLeftMeter->setBounds(sideRArea);
     }
     else if (numOutputChannels > 1)
     {
         // Stereo output - split height in half
         auto leftHalf = sideRArea.removeFromLeft(sideRArea.getWidth() / 2);
         if (outputLeftMeter)
-            outputLeftMeter->setBounds(leftHalf.reduced( (int)(leftHalf.getWidth() * 0.35f) ));
+            outputLeftMeter->setBounds(leftHalf);
         if (outputRightMeter)
-            outputRightMeter->setBounds(sideRArea.reduced( (int)(sideRArea.getWidth() * 0.35f) ));
+            outputRightMeter->setBounds(sideRArea);
     }
     
     // --- FOOTER ---
