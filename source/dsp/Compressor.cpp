@@ -52,6 +52,11 @@ void Compressor::updateMakeUp(float newMakeUp_dB)
     makeUpGaindB = newMakeUp_dB;
 }
 
+void Compressor::updateMix(float newMix)
+{
+    mix = newMix / 100.0f;
+}
+
 float Compressor::getGainReduction()
 {
     return currentGR_dB;
@@ -60,8 +65,9 @@ float Compressor::getGainReduction()
 // =========================================================================
 // FEED-FORWARD TOPOLOGY (processFF)
 // Sidechain detects signal BEFORE gain is applied.
+// This method overwrites the input buffer
 // =========================================================================
-void Compressor::processFF(juce::AudioBuffer<float>& processedBuffer)
+void Compressor::processFF_inplace(juce::AudioBuffer<float>& processedBuffer)
 {
     const int numSamples = processedBuffer.getNumSamples();
     const int numChannels = processedBuffer.getNumChannels();
@@ -118,7 +124,7 @@ void Compressor::processFF(juce::AudioBuffer<float>& processedBuffer)
             // 4. APPLY GAIN (in-place)
             const float gainReductionLinear = juce::Decibels::decibelsToGain(currentGR_dB);
             const float makeUpGainLinear = juce::Decibels::decibelsToGain(makeUpGaindB);
-            channelData[sample] = inputSample * gainReductionLinear * makeUpGainLinear;
+            channelData[sample] = inputSample * gainReductionLinear * makeUpGainLinear * mix + inputSample * (1.0f - mix);
         }
 
         // Store the final envelope value for the start of the next block
@@ -129,8 +135,9 @@ void Compressor::processFF(juce::AudioBuffer<float>& processedBuffer)
 // =========================================================================
 // FEED-BACK TOPOLOGY (processFB)
 // Sidechain detects signal AFTER gain is applied.
+// This method overwrites the input buffer
 // =========================================================================
-void Compressor::processFB(juce::AudioBuffer<float>& processedBuffer)
+void Compressor::processFB_inplace(juce::AudioBuffer<float>& processedBuffer)
 {
     const int numSamples = processedBuffer.getNumSamples();
     const int numChannels = processedBuffer.getNumChannels();
@@ -189,9 +196,158 @@ void Compressor::processFB(juce::AudioBuffer<float>& processedBuffer)
             currentGR_dB = -smoothedReductionAmount;
             
             // 5. STORE OUTPUT (The output sample calculated in step 1)
-            channelData[sample] = outputSample;
+            channelData[sample] = outputSample * mix + inputSample * (1.0f - mix);
         }
         
         envelope[channel] = currentGR_dB;
     }
+}
+
+// =========================================================================
+// FEED-FORWARD TOPOLOGY (processFF)
+// Sidechain detects signal BEFORE gain is applied.
+// This method returns a processed buffer but does not affect the inputBuffer
+// =========================================================================
+juce::AudioBuffer<float> Compressor::processFF(juce::AudioBuffer<float>& inputBuffer)
+{
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
+    
+    // Create output buffer
+    juce::AudioBuffer<float> outputBuffer(numChannels, numSamples);
+    
+    // --- Pre-calculations ---
+    // Calculate the slope for gain reduction: 1 - (1 / Ratio)
+    const float compressionSlope = 1.0f - (1.0f / ratio);
+    const float kneeStart = thresdB - (kneedB / 2.0f);
+    const float kneeEnd = thresdB + (kneedB / 2.0f);
+    
+    // Ensure envelope vector is correctly sized (safety)
+    if ((int)envelope.size() != numChannels)
+        envelope.assign(numChannels, 0.0f);
+    
+    for (int channel = 0; channel < numChannels; ++channel)
+    {
+        const float* inputChannelData = inputBuffer.getReadPointer(channel);
+        float* outputChannelData = outputBuffer.getWritePointer(channel);
+        float currentGR_dB = envelope[channel];
+        
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            float inputSample = inputChannelData[sample];
+            float magnitude = std::abs(inputSample);
+            
+            // Clamp magnitude to prevent log(0)
+            magnitude = std::max(magnitude, minMagnitude);
+            
+            // 1. SIDECHAIN: Convert magnitude to dB
+            const float inputDB = juce::Decibels::gainToDecibels(magnitude);
+            
+            // 2. TARGET GAIN REDUCTION (in dB)
+            // Soft Knee Equation
+            float targetGR_dB = 0.0f;
+            if (inputDB > kneeEnd)
+            {
+                targetGR_dB = (inputDB - thresdB) * compressionSlope;
+            }
+            else if (inputDB > kneeStart)
+            {
+                const float x = inputDB - kneeStart;
+                targetGR_dB = compressionSlope / (2.0f * kneedB) * (x * x);
+            }
+            
+            // 3. ENVELOPE SMOOTHING (in dB)
+            float alpha = (targetGR_dB > -currentGR_dB) ? attackCoeff : releaseCoeff;
+            
+            const float smoothedReductionAmount = (alpha * -currentGR_dB) + ((1.0f - alpha) * targetGR_dB);
+            
+            currentGR_dB = -smoothedReductionAmount;
+            
+            // 4. APPLY GAIN and write to output buffer
+            const float gainReductionLinear = juce::Decibels::decibelsToGain(currentGR_dB);
+            const float makeUpGainLinear = juce::Decibels::decibelsToGain(makeUpGaindB);
+            outputChannelData[sample] = inputSample * gainReductionLinear * makeUpGainLinear * mix + inputSample * (1.0f - mix);
+        }
+        
+        // Store the final envelope value for the start of the next block
+        envelope[channel] = currentGR_dB;
+    }
+    
+    return outputBuffer;
+}
+
+// =========================================================================
+// FEED-BACK TOPOLOGY (processFB)
+// Sidechain detects signal AFTER gain is applied.
+// This method returns a processed buffer but does not affect the inputBuffer
+// =========================================================================
+juce::AudioBuffer<float> Compressor::processFB(juce::AudioBuffer<float>& inputBuffer)
+{
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
+    
+    // Create output buffer
+    juce::AudioBuffer<float> outputBuffer(numChannels, numSamples);
+    
+    // --- Pre-calculations ---
+    // Calculate the slope for gain reduction: 1 - (1 / Ratio)
+    const float compressionSlope = 1.0f - (1.0f / ratio);
+    const float kneeStart = thresdB - (kneedB / 2.0f);
+    const float kneeEnd = thresdB + (kneedB / 2.0f);
+    
+    // Ensure envelope vector is correctly sized (safety)
+    if ((int)envelope.size() != numChannels)
+        envelope.assign(numChannels, 0.0f);
+    
+    
+    for (int channel = 0; channel < numChannels; ++channel)
+    {
+        const float* inputChannelData = inputBuffer.getReadPointer(channel);
+        float* outputChannelData = outputBuffer.getWritePointer(channel);
+        currentGR_dB = envelope[channel];
+        
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            float inputSample = inputChannelData[sample];
+            
+            // 1. APPLY CURRENT GAIN (Based on previous sample's envelope state)
+            const float finalGainDB = currentGR_dB + makeUpGaindB;
+            const float finalGainLinear = juce::Decibels::decibelsToGain(finalGainDB);
+            float outputSample = inputSample * finalGainLinear;
+            
+            // 2. SIDECHAIN: Detect magnitude of the OUTPUT (Feed-Back)
+            float magnitude = std::abs (outputSample);
+            magnitude = std::max(magnitude, minMagnitude);
+            const float outputDB = juce::Decibels::gainToDecibels(magnitude);
+            
+            // 3. TARGET GAIN REDUCTION COMPUTATION (In dB)
+            // Hard knee equation
+            // float targetGR_dB = (outputDB > thresdB) ? (outputDB - thresdB) * compressionSlope : 0.0f;
+            
+            // Soft Knee Equation
+            float targetGR_dB = 0.0f;
+            if (outputDB > kneeEnd)
+            {
+                targetGR_dB = (outputDB - thresdB) * compressionSlope;
+            }
+            else if (outputDB > kneeStart)
+            {
+                const float x = outputDB - kneeStart;
+                targetGR_dB = compressionSlope / (2.0f * kneedB) * (x * x);
+            }
+            
+            // 4. ENVELOPE SMOOTHING (In dB Domain)
+            float alpha = (targetGR_dB > -currentGR_dB) ? attackCoeff : releaseCoeff;
+            
+            const float smoothedReductionAmount = (alpha * -currentGR_dB) + ((1.0f - alpha) * targetGR_dB);
+            
+            currentGR_dB = -smoothedReductionAmount;
+            
+            // 5. STORE OUTPUT (The output sample calculated in step 1)
+            outputChannelData[sample] = outputSample * mix + inputSample * (1.0f - mix);
+        }
+        
+        envelope[channel] = currentGR_dB;
+    }
+    return outputBuffer;
 }

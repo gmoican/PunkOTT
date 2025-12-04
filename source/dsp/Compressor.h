@@ -24,6 +24,7 @@ public:
     void updateAttack(float sampleRate, float newAttMs);
     void updateRelease(float sampleRate, float newRelMs);
     void updateMakeUp(float newMakeUp_dB);
+    void updateMix(float newMix);
     
     float getGainReduction();
 
@@ -32,8 +33,16 @@ public:
      *
      * @param processedBuffer The buffer containing the signal to be processed.
      */
-    void processFF(juce::AudioBuffer<float>& processedBuffer);
-    void processFB(juce::AudioBuffer<float>& processedBuffer);
+    void processFF_inplace(juce::AudioBuffer<float>& processedBuffer);
+    void processFB_inplace(juce::AudioBuffer<float>& processedBuffer);
+    
+    /**
+     * @brief Processes the audio buffer in-place, applying downward compression.
+     *
+     * @param inputBuffer The buffer containing the signal to be processed. It will not be overwritten
+     */
+    juce::AudioBuffer<float> processFF(juce::AudioBuffer<float>& inputBuffer);
+    juce::AudioBuffer<float> processFB(juce::AudioBuffer<float>& inputBuffer);
 
 private:
     // --- Internal State ---
@@ -45,6 +54,7 @@ private:
     float releaseCoeff = 0.0f;      // Smoothing coefficient (Release)
     float makeUpGaindB = 0.0f;      // Compensation gain after the compression takes place
     float currentGR_dB = 0.0f;      // Gain reduction (in dB) being applied currently
+    float mix = 1.0f;               // Mix (dry/wet)
 
     // --- Prevent copy and move ---
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Compressor)
