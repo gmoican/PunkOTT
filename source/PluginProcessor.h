@@ -31,7 +31,7 @@ namespace Parameters
     constexpr auto outMin = -24.0f;
     constexpr auto outMax = 24.0f;
 
-    // ========== OTT PARAMETERS ===========
+    // ====== COMPRESSOR PARAMETERS ===========
     // Comp: Determines the ceiling (in dB) for high-level signals to be compressed down
     constexpr auto compThresId = "comp";
     constexpr auto compThresName = "Compressor Threshold";
@@ -39,12 +39,19 @@ namespace Parameters
     constexpr auto compThresMin = -24.0f;
     constexpr auto compThresMax = 0.0f;
 
-    // Comp time control
-    constexpr auto compTimeId = "compressorTime";
-    constexpr auto compTimeName = "Compressor Time Control";
-    constexpr auto compTimeDefault = 0.5f;
-    constexpr auto compTimeMin = 0.0f;
-    constexpr auto compTimeMax = 1.0f;
+    // Comp attack
+    constexpr auto compAttackId = "compressorAttack";
+    constexpr auto compAttackName = "Compressor Attack (ms)";
+    constexpr auto compAttackDefault = 15.0f;
+    constexpr auto compAttackMin = 0.1f;
+    constexpr auto compAttackMax = 50.0f;
+
+    // Comp release
+    constexpr auto compReleaseId = "compressorRelease";
+    constexpr auto compReleaseName = "Compressor Release (ms)";
+    constexpr auto compReleaseDefault = 60.0f;
+    constexpr auto compReleaseMin = 10.0f;
+    constexpr auto compReleaseMax = 100.0f;
 
     // Comp mix control
     constexpr auto compMixId = "compMix";
@@ -53,6 +60,7 @@ namespace Parameters
     constexpr auto compMixMin = 0.0f;
     constexpr auto compMixMax = 100.0f;
 
+    // ======= LIFTER PARAMETERS ===========
     // Lifter: Determines the ceiling (in dB) for low-level signals to be lifted up
     constexpr auto lifterThresId = "lifter";
     constexpr auto lifterThresName = "Lifter Range";
@@ -60,12 +68,19 @@ namespace Parameters
     constexpr auto lifterThresMin = -80.0f;
     constexpr auto lifterThresMax = 0.0f;
 
-    // Lifter time control
-    constexpr auto lifterTimeId = "lifterTime";
-    constexpr auto lifterTimeName = "Lifter Time Control";
-    constexpr auto lifterTimeDefault = 0.5f;
-    constexpr auto lifterTimeMin = 0.0f;
-    constexpr auto lifterTimeMax = 1.0f;
+    // Lifter attack
+    constexpr auto lifterAttackId = "lifterAttack";
+    constexpr auto lifterAttackName = "Lifter Attack (ms)";
+    constexpr auto lifterAttackDefault = 15.0f;
+    constexpr auto lifterAttackMin = 1.0f;
+    constexpr auto lifterAttackMax = 50.0f;
+
+    // Lifter release
+    constexpr auto lifterReleaseId = "lifterRelease";
+    constexpr auto lifterReleaseName = "Lifter Release (ms)";
+    constexpr auto lifterReleaseDefault = 50.0f;
+    constexpr auto lifterReleaseMin = 10.0f;
+    constexpr auto lifterReleaseMax = 100.0f;
 
     // Lifter mix control
     constexpr auto lifterMixId = "lifterMix";

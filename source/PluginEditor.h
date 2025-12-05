@@ -4,7 +4,6 @@
 // #include "BinaryData.h"
 #include "gui/CustomLookAndFeel.h"
 #include "gui/LevelMeter.h"
-#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
 class PluginEditor : public juce::AudioProcessorEditor
@@ -21,8 +20,6 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     PunkOTTProcessor& processorRef;
-    std::unique_ptr<melatonin::Inspector> inspector;
-    juce::TextButton inspectButton { "Inspect the UI" };
     
     // Custom Look and Feel
     CustomLookAndFeel myCustomLnF;
@@ -32,8 +29,8 @@ private:
     
     // Sliders - Rotary knobs
     juce::Slider inputSlider, gateSlider, outputSlider;
-    juce::Slider lifterRangeSlider, lifterTimeSlider, lifterMixSlider;
-    juce::Slider compThresSlider, compTimeSlider, compMixSlider;
+    juce::Slider lifterRangeSlider, lifterAttackSlider, lifterReleaseSlider, lifterMixSlider;
+    juce::Slider compThresSlider, compAttackSlider, compReleaseSlider, compMixSlider;
     
     juce::TextButton clipperButton { "Clip" };
     
@@ -48,7 +45,7 @@ private:
     
     // Attachments for linking sliders-parameters
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> inputAttachment, gateAttachment, mixAttachment, outputAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lifterRangeAttachment, lifterTimeAttachment, lifterMixAttachment, compThresAttachment, compTimeAttachment, compMixAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> lifterRangeAttachment, lifterAttackAttachment, lifterReleaseAttachment, lifterMixAttachment, compThresAttachment, compAttackAttachment, compReleaseAttachment, compMixAttachment;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> clipperAttachment;
     

@@ -124,7 +124,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
     
     layout.add(std::move(utilsGroup));
     
-    // --- Compressor Parameters Group ---
+    // --- OTT Parameters Group ---
     
     auto dynGroup = std::make_unique<juce::AudioProcessorParameterGroup>(
                                                                          "dyn",         // Group ID (must be unique string)
@@ -142,12 +142,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                        
                        );
     
-    // Lifter time control -> Automatically adjusts attack/release times and make-up gain
+    // Lifter Attack Time
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
-                                                                   Parameters::lifterTimeId,
-                                                                   Parameters::lifterTimeName,
-                                                                   juce::NormalisableRange<float>(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.01f),
-                                                                   Parameters::lifterTimeDefault
+                                                                   Parameters::lifterAttackId,
+                                                                   Parameters::lifterAttackName,
+                                                                   juce::NormalisableRange<float>(Parameters::lifterAttackMin, Parameters::lifterAttackMax, 0.1f),
+                                                                   Parameters::lifterAttackDefault
+                                                                   )
+                       );
+    
+    // Lifter Release Time
+    dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
+                                                                   Parameters::lifterReleaseId,
+                                                                   Parameters::lifterReleaseName,
+                                                                   juce::NormalisableRange<float>(Parameters::lifterReleaseMin, Parameters::lifterReleaseMax, 0.1f),
+                                                                   Parameters::lifterReleaseDefault
                                                                    )
                        );
     
@@ -170,12 +179,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                        
                        );
     
-    // Compressor time control -> Automatically adjusts attack/release times and make-up gain
+    // Compressor Attack Time
     dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
-                                                                   Parameters::compTimeId,
-                                                                   Parameters::compTimeName,
-                                                                   juce::NormalisableRange<float>(Parameters::compTimeMin, Parameters::compTimeMax, 0.01f),
-                                                                   Parameters::compTimeDefault
+                                                                   Parameters::compAttackId,
+                                                                   Parameters::compAttackName,
+                                                                   juce::NormalisableRange<float>(Parameters::compAttackMin, Parameters::compAttackMax, 0.1f),
+                                                                   Parameters::compAttackDefault
+                                                                   )
+                       );
+    
+    // Compressor Release Time
+    dynGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
+                                                                   Parameters::compReleaseId,
+                                                                   Parameters::compReleaseName,
+                                                                   juce::NormalisableRange<float>(Parameters::compReleaseMin, Parameters::compReleaseMax, 0.1f),
+                                                                   Parameters::compReleaseDefault
                                                                    )
                        );
     
@@ -220,16 +238,10 @@ void PunkOTTProcessor::updateParameters()
     // Lifter updates
     const float lifterMix = apvts.getRawParameterValue(Parameters::lifterMixId)->load();
     const float rangedB = apvts.getRawParameterValue(Parameters::lifterThresId)->load();
-    const float lifterMu = apvts.getRawParameterValue(Parameters::lifterTimeId)->load();
-    const float lifterAttackMS = juce::jmap(lifterMu, 10.0f, 50.0f);
-    const float lifterReleaseMS = juce::jmap(lifterMu, 200.0f, 30.0f);
-    const float lifterMakeUpGain = juce::jmap(lifterMu, -9.0f, 0.0f) + juce::jmap(rangedB, -60.f, -20.f, 3.0f, -6.0f);
+    const float lifterAttackMS = apvts.getRawParameterValue(Parameters::lifterAttackId)->load();
+    const float lifterReleaseMS = apvts.getRawParameterValue(Parameters::lifterReleaseId)->load();
+    const float lifterMakeUpGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -15.0f) : 0.0f;
     
-    /** LIFTER TIMES + MAKEUP
-     * Attack   {  10ms - 50ms }
-     * Release  { 200ms - 30ms }
-     * MakeUp   {  -9dB -  0dB }
-     */
     lifter.updateMix(lifterMix);
     lifter.updateRange(rangedB);
     lifter.updateAttack(sampleRate, lifterAttackMS);
@@ -239,14 +251,9 @@ void PunkOTTProcessor::updateParameters()
     // Compressor updates
     const float compMix = apvts.getRawParameterValue(Parameters::compMixId)->load();
     const float thresdB = apvts.getRawParameterValue(Parameters::compThresId)->load();
-    const float compressorMu = apvts.getRawParameterValue(Parameters::compTimeId)->load();
-    const float compAttackMS = juce::jmap(compressorMu, 0.3f, 30.0f);
-    const float compReleaseMS = juce::jmap(compressorMu, 10.0f, 100.0f);
+    const float compAttackMS = apvts.getRawParameterValue(Parameters::compAttackId)->load();
+    const float compReleaseMS = apvts.getRawParameterValue(Parameters::compReleaseId)->load();
     
-    /** COMPRESSOR TIMES + MAKEUP
-     * Attack   { 0.1ms -  30ms }
-     * Release  {  10ms - 100ms }
-     */
     compressor.updateMix(compMix);
     compressor.updateThres(thresdB);
     compressor.updateAttack(sampleRate, compAttackMS);

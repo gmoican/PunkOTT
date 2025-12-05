@@ -38,11 +38,6 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // compContainer.setButtonText("Comp");
     addAndMakeVisible (compContainer);
     
-    displayContainer.setColour (juce::TextButton::buttonColourId, juce::Colours::red.withAlpha(0.25f));
-    displayContainer.setEnabled(false);
-    // displayContainer.setButtonText("Display");
-    addAndMakeVisible (displayContainer);
-    
     // --- UTILITIES PARAMETERS ---
     // Input knob
     inputSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -85,15 +80,25 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     lifterRangeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterThresId, lifterRangeSlider);
 
-    // Lifter-time knob
-    lifterTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    lifterTimeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    lifterTimeSlider.setRange(Parameters::lifterTimeMin, Parameters::lifterTimeMax, 0.01);
-    lifterTimeSlider.setValue(Parameters::lifterTimeDefault);
-    lifterTimeSlider.setName(u8"β");
-    addAndMakeVisible(lifterTimeSlider);
+    // Lifter-attack knob
+    lifterAttackSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    lifterAttackSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    lifterAttackSlider.setRange(Parameters::lifterAttackMin, Parameters::lifterAttackMax, 0.1);
+    lifterAttackSlider.setValue(Parameters::lifterAttackDefault);
+    lifterAttackSlider.setName("Att");
+    addAndMakeVisible(lifterAttackSlider);
     
-    lifterTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterTimeId, lifterTimeSlider);
+    lifterAttackAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterAttackId, lifterAttackSlider);
+
+    // Lifter-release knob
+    lifterReleaseSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    lifterReleaseSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    lifterReleaseSlider.setRange(Parameters::lifterReleaseMin, Parameters::lifterReleaseMax, 0.1);
+    lifterReleaseSlider.setValue(Parameters::lifterReleaseDefault);
+    lifterReleaseSlider.setName("Rel");
+    addAndMakeVisible(lifterReleaseSlider);
+    
+    lifterReleaseAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::lifterReleaseId, lifterReleaseSlider);
     
     // Mix knob
     lifterMixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -116,15 +121,25 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     
     compThresAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compThresId, compThresSlider);
     
-    // Comp-time knob
-    compTimeSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    compTimeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    compTimeSlider.setRange(Parameters::compTimeMin, Parameters::compTimeMax, 0.01);
-    compTimeSlider.setValue(Parameters::compTimeDefault);
-    compTimeSlider.setName(u8"α");
-    addAndMakeVisible(compTimeSlider);
+    // Comp-attack knob
+    compAttackSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    compAttackSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    compAttackSlider.setRange(Parameters::compAttackMin, Parameters::compAttackMax, 0.1);
+    compAttackSlider.setValue(Parameters::compAttackDefault);
+    compAttackSlider.setName("Att");
+    addAndMakeVisible(compAttackSlider);
     
-    compTimeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compTimeId, compTimeSlider);
+    compAttackAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compAttackId, compAttackSlider);
+    
+    // Comp-release knob
+    compReleaseSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    compReleaseSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    compReleaseSlider.setRange(Parameters::compReleaseMin, Parameters::compReleaseMax, 0.1);
+    compReleaseSlider.setValue(Parameters::compReleaseDefault);
+    compReleaseSlider.setName("Rel");
+    addAndMakeVisible(compReleaseSlider);
+    
+    compReleaseAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.apvts, Parameters::compReleaseId, compReleaseSlider);
     
     // Mix knob
     compMixSlider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -175,20 +190,6 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     versionTag.setJustificationType(juce::Justification::centred);
     versionTag.setColour(juce::Label::textColourId, UIColors::text);
     addAndMakeVisible(versionTag);
-
-    // --- MELATONIN  ---
-    addAndMakeVisible (inspectButton);
-
-    // this chunk of code instantiates and opens the melatonin inspector
-    inspectButton.onClick = [&] {
-        if (!inspector)
-        {
-            inspector = std::make_unique<melatonin::Inspector> (*this);
-            inspector->onClose = [this]() { inspector.reset(); };
-        }
-
-        inspector->setVisible (true);
-    };
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -216,8 +217,8 @@ void PluginEditor::resized()
     
     // --- LAYOUT SETUP ---
     auto headerArea = area.removeFromTop((int)(area.getHeight() * 0.12f));
-    auto sideLArea = area.removeFromLeft((int)(area.getWidth() * 0.08f));
-    auto sideRArea = area.removeFromRight((int)(area.getWidth() * 0.08f));
+    auto sideLArea = area.removeFromLeft((int)(area.getWidth() * 0.12f));
+    auto sideRArea = area.removeFromRight((int)(area.getWidth() * 0.12f));
     auto footerArea = area.removeFromBottom(30);
     
     header.setBounds(headerArea);
@@ -274,12 +275,12 @@ void PluginEditor::resized()
     
     outputSlider.setBounds(headerArea.removeFromRight(headerArea.getHeight()));
     
-    clipperButton.setBounds(headerArea.removeFromRight(80)
-                                      .reduced(0, 15)
+    clipperButton.setBounds(headerArea.removeFromRight(headerArea.getHeight() + 20)
+                                      .reduced(10, 15)
                             );
     
     // --- LIFTER AND COMP CONTROLS ---
-    auto contentItemHeight = area.getHeight() / 2.5;
+    auto contentItemHeight = area.getHeight();
     // Reserve the top area for lifter and comp containers
     auto topArea = area.removeFromTop(contentItemHeight);
     
@@ -292,22 +293,27 @@ void PluginEditor::resized()
     
     // Position sliders inside lifter container
     auto lifterSliderArea = lifterArea.reduced(10);
-    auto lifterSliderWidth = lifterSliderArea.getWidth() / 3;
+    auto compSliderArea = compArea.reduced(10);
     
-    lifterRangeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderWidth));
-    lifterTimeSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderWidth));
-    lifterMixSlider.setBounds(lifterSliderArea.removeFromLeft(lifterSliderWidth));
+    // Split into top and bottom rows
+    auto topRow = lifterSliderArea.removeFromTop(lifterSliderArea.getHeight() / 2);
+    auto bottomRow = lifterSliderArea;
+
+    // Split each row into left and right columns
+    auto sliderWidth = topRow.getWidth() / 2;
+    
+    lifterRangeSlider.setBounds(topRow.removeFromLeft(sliderWidth));
+    lifterMixSlider.setBounds(topRow.removeFromLeft(sliderWidth));
+    lifterAttackSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
+    lifterReleaseSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
     
     // Position sliders inside comp container
-    auto compSliderArea = compArea.reduced(10);
-    auto compSliderWidth = compSliderArea.getWidth() / 3;
+    // Split into top and bottom rows
+    topRow = compSliderArea.removeFromTop(compSliderArea.getHeight() / 2);
+    bottomRow = compSliderArea;
     
-    compThresSlider.setBounds(compSliderArea.removeFromLeft(compSliderWidth));
-    compTimeSlider.setBounds(compSliderArea.removeFromLeft(compSliderWidth));
-    compMixSlider.setBounds(compSliderArea.removeFromLeft(compSliderWidth));
-    
-    // --- DISPLAY ---
-    displayContainer.setBounds (area.reduced(5));
-    inspectButton.setBounds (getLocalBounds().withSizeKeepingCentre(100, 50));
-
+    compThresSlider.setBounds(topRow.removeFromLeft(sliderWidth));
+    compMixSlider.setBounds(topRow.removeFromLeft(sliderWidth));
+    compAttackSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
+    compReleaseSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
 }
