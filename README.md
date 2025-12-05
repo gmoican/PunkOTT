@@ -17,7 +17,6 @@ This is plugin is still under development. Here are some things I want to achiev
     * APVTS listeners.
 * **GUI**:
     * _BUG:_ Level meters are messed up when plugin is instantiated in mono.
-    * Audio waveform visualizer. This is not really needed, but I want a fancy way of displaying how the plugin affects the signal.
 * **Multiplatform availability**:
     * When I finish with the previous requirements, I will work on the `build.yml` file for building the plugin with GitHub Actions.
 * **Extras**:
@@ -25,4 +24,8 @@ This is plugin is still under development. Here are some things I want to achiev
     * I am very happy with the code structure I am implementing with this plugin (you may call me a noob, but I am happy with it hahaha). I am tempted to create a new repository to save my Lifter, Compressor, Gate and Clipper classes, as well as any tool that I develop in the future.
 
 ## Inner Processing
-I will update this section with a diagram of the DSP once it is done...
+I will update this section with a diagram of the DSP one of this days... But there is one important thing to know from this plugin: it **squashes** and **destroys** your signal. Take a look at the following pictures to see how dynamics can be easily messed up.
+
+Lifter squash             |  Lifter + Comp squash
+:-------------------------:|:-------------------------:
+![](docs/images/squashed1.png)  |  ![](docs/images/squashed2.png)
