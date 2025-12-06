@@ -240,7 +240,7 @@ void PunkOTTProcessor::updateParameters()
     const float rangedB = apvts.getRawParameterValue(Parameters::lifterThresId)->load();
     const float lifterAttackMS = apvts.getRawParameterValue(Parameters::lifterAttackId)->load();
     const float lifterReleaseMS = apvts.getRawParameterValue(Parameters::lifterReleaseId)->load();
-    const float lifterMakeUpGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -15.0f) : 0.0f;
+    const float lifterMakeUpGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -9.0f) : 0.0f;
     
     lifter.updateMix(lifterMix);
     lifter.updateRange(rangedB);
@@ -269,8 +269,18 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gate.prepare(sampleRate, samplesPerBlock);
     gate.updateAttack((float) sampleRate, 100.f);
     gate.updateRelease((float) sampleRate, 30.f);
+    
+    masterLimiter.prepare(sampleRate, samplesPerBlock);
+    masterLimiter.updateThres(-6.f);
+    masterLimiter.updateKnee(3.0f);
+    masterLimiter.updateRatio(100.0f);
+    masterLimiter.updateAttack((float) sampleRate, 1.0f);
+    masterLimiter.updateRelease((float) sampleRate, 50.0f);
+    
     lifter.prepare(sampleRate, samplesPerBlock);
+    lifter.updateRatio(6.f);
     compressor.prepare(sampleRate, samplesPerBlock);
+    compressor.updateRatio(8.f);
     
     updateParameters();
 }
@@ -334,6 +344,9 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     
     // 2. OTT - Comp
     compressor.processFF_inplace(buffer);
+    
+    // 2. OTT - Safe limiter
+    masterLimiter.processFF_inplace(buffer);
     
     // 2. OTT - Clipper
     if (clipperState) {

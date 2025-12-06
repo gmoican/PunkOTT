@@ -156,7 +156,7 @@ private:
     
     // --- OTT PROCESSORS ---
     Lifter lifter;
-    Compressor compressor;
+    Compressor compressor, masterLimiter;
     
     Clipper clipper;
     bool clipperState = false;
