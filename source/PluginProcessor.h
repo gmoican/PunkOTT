@@ -44,14 +44,14 @@ namespace Parameters
     constexpr auto compAttackName = "Compressor Attack (ms)";
     constexpr auto compAttackDefault = 15.0f;
     constexpr auto compAttackMin = 0.1f;
-    constexpr auto compAttackMax = 50.0f;
+    constexpr auto compAttackMax = 250.0f;
 
     // Comp release
     constexpr auto compReleaseId = "compressorRelease";
     constexpr auto compReleaseName = "Compressor Release (ms)";
     constexpr auto compReleaseDefault = 60.0f;
     constexpr auto compReleaseMin = 10.0f;
-    constexpr auto compReleaseMax = 100.0f;
+    constexpr auto compReleaseMax = 2500.0f;
 
     // Comp mix control
     constexpr auto compMixId = "compMix";
@@ -73,14 +73,14 @@ namespace Parameters
     constexpr auto lifterAttackName = "Lifter Attack (ms)";
     constexpr auto lifterAttackDefault = 15.0f;
     constexpr auto lifterAttackMin = 1.0f;
-    constexpr auto lifterAttackMax = 50.0f;
+    constexpr auto lifterAttackMax = 500.0f;
 
     // Lifter release
     constexpr auto lifterReleaseId = "lifterRelease";
     constexpr auto lifterReleaseName = "Lifter Release (ms)";
     constexpr auto lifterReleaseDefault = 50.0f;
     constexpr auto lifterReleaseMin = 10.0f;
-    constexpr auto lifterReleaseMax = 100.0f;
+    constexpr auto lifterReleaseMax = 2500.0f;
 
     // Lifter mix control
     constexpr auto lifterMixId = "lifterMix";
