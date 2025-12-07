@@ -1,7 +1,7 @@
 #include "Lifter.h"
 
 // Define a small constant to prevent division by zero near the noise floor.
-static constexpr float minMagnitude = 0.00001f; // Approx -100 dB
+static constexpr float minMagnitude = 0.0001f; // Approx -100 dB
 
 Lifter::Lifter()
 {
@@ -13,7 +13,7 @@ void Lifter::prepare(double sampleRate, int totalNumChannels)
     juce::ignoreUnused(sampleRate);
     
     // Resize the envelope vector to match the channel count
-    envelope.assign(totalNumChannels, 0.0f); // Initialize gain to 0 dB 
+    envelope.assign(totalNumChannels, 1.0f); // Initialize gain to 0 dB 
 }
 
 float Lifter::calculateTimeCoeff(float sampleRate, float time_ms)
@@ -48,7 +48,7 @@ void Lifter::updateRelease(float sampleRate, float newRelMs)
 
 void Lifter::updateMakeUp(float newMakeUp_dB)
 {
-    makeUpGaindB = newMakeUp_dB;
+    makeUpGain_linear = juce::Decibels::decibelsToGain(newMakeUp_dB);
 }
 
 void Lifter::updateMix(float newMix)
@@ -58,7 +58,7 @@ void Lifter::updateMix(float newMix)
 
 float Lifter::getGainAddition()
 {
-    return currentGA_dB;
+    return juce::Decibels::gainToDecibels(currentGA_linear);
 }
 
 void Lifter::process_inplace(juce::AudioBuffer<float>& processedBuffer)
@@ -80,7 +80,7 @@ void Lifter::process_inplace(juce::AudioBuffer<float>& processedBuffer)
     {
         // Pointers for reading input and writing wet output
         float* channelData = processedBuffer.getWritePointer(channel);
-        currentGA_dB = envelope[channel];
+        currentGA_linear = envelope[channel];
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -93,37 +93,36 @@ void Lifter::process_inplace(juce::AudioBuffer<float>& processedBuffer)
             // 1. SIDECHAIN: Convert magnitude to dB
             const float inputDB = juce::Decibels::gainToDecibels(magnitude);
             
-            // 2. TARGET GAIN REDUCTION (in dB)
-            // Hard Knee Equation
-            // float targetGR_dB = (inputDB < rangedB) ? (rangedB - inputDB) * compressionSlope : 0.0f;
-            
+            // 2. TARGET GAIN REDUCTION - Get targetGR in dB, then convert to linear
             // Soft Knee Equation
-            float targetGR_dB = 0.0f;
+            float targetGR = 0.0f;
             if (inputDB < kneeStart)
             {
-                targetGR_dB = (rangedB - inputDB) * compressionSlope;
+                targetGR = (rangedB - inputDB) * compressionSlope;
             }
             else if (inputDB < kneeEnd)
             {
                 const float x = kneeEnd - inputDB;
-                targetGR_dB = compressionSlope / (2.0f * kneedB) * (x * x);
+                targetGR = compressionSlope / (2.0f * kneedB) * (x * x);
             }
             
-            // 3. ENVELOPE SMOOTHING (in dB)
-            float alpha = (targetGR_dB > currentGA_dB) ? attackCoeff : releaseCoeff;
+            targetGR = juce::Decibels::decibelsToGain(targetGR);
             
-            currentGA_dB = (alpha * currentGA_dB) + ((1.0f - alpha) * targetGR_dB);
+            // 3. ENVELOPE SMOOTHING (in dB)
+            float alpha = (targetGR > currentGA_linear) ? attackCoeff : releaseCoeff;
+            
+            currentGA_linear = (alpha * currentGA_linear) + ((1.0f - alpha) * targetGR);
+            currentGA_linear = juce::jlimit(0.0f, 10.0f, currentGA_linear);
             
             // 4. APPLY GAIN (in-place)
-            const float finalGainLinear = juce::Decibels::decibelsToGain(currentGA_dB);
-            const float makeUpGainLinear = juce::Decibels::decibelsToGain(makeUpGaindB);
-            channelData[sample] = inputSample * finalGainLinear * makeUpGainLinear * mix + inputSample * (1.0f - mix);
+            channelData[sample] = inputSample * currentGA_linear * makeUpGain_linear * mix + inputSample * (1.0f - mix);
         }
 
         // Store the final envelope value for the start of the next block
-        envelope[channel] = currentGA_dB;
+        envelope[channel] = currentGA_linear;
     }
 }
+
 juce::AudioBuffer<float> Lifter::process(juce::AudioBuffer<float>& inputBuffer)
 {
     const int numSamples = inputBuffer.getNumSamples();
@@ -147,7 +146,7 @@ juce::AudioBuffer<float> Lifter::process(juce::AudioBuffer<float>& inputBuffer)
         // Pointers for reading input and writing wet output
         const float* inputChannelData = inputBuffer.getReadPointer(channel);
         float* outputChannelData = outputBuffer.getWritePointer(channel);
-        currentGA_dB = envelope[channel];
+        currentGA_linear = envelope[channel];
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -160,35 +159,32 @@ juce::AudioBuffer<float> Lifter::process(juce::AudioBuffer<float>& inputBuffer)
             // 1. SIDECHAIN: Convert magnitude to dB
             const float inputDB = juce::Decibels::gainToDecibels(magnitude);
             
-            // 2. TARGET GAIN REDUCTION (in dB)
-            // Hard Knee Equation
-            // float targetGR_dB = (inputDB < rangedB) ? (rangedB - inputDB) * compressionSlope : 0.0f;
-            
+            // 2. TARGET GAIN REDUCTION - Get targetGR in dB, then convert to linear
             // Soft Knee Equation
-            float targetGR_dB = 0.0f;
+            float targetGR = 1.0f;
             if (inputDB < kneeStart)
             {
-                targetGR_dB = (rangedB - inputDB) * compressionSlope;
+                targetGR = (rangedB - inputDB) * compressionSlope;
             }
             else if (inputDB < kneeEnd)
             {
                 const float x = kneeEnd - inputDB;
-                targetGR_dB = compressionSlope / (2.0f * kneedB) * (x * x);
+                targetGR = compressionSlope / (2.0f * kneedB) * (x * x);
             }
             
-            // 3. ENVELOPE SMOOTHING (in dB)
-            float alpha = (targetGR_dB > currentGA_dB) ? attackCoeff : releaseCoeff;
+            targetGR = juce::Decibels::decibelsToGain(targetGR);
             
-            currentGA_dB = (alpha * currentGA_dB) + ((1.0f - alpha) * targetGR_dB);
+            // 3. ENVELOPE SMOOTHING (in dB)
+            float alpha = (targetGR > currentGA_linear) ? attackCoeff : releaseCoeff;
+            
+            currentGA_linear = (alpha * currentGA_linear) + ((1.0f - alpha) * targetGR);
             
             // 4. APPLY GAIN (in-place)
-            const float finalGainLinear = juce::Decibels::decibelsToGain(currentGA_dB);
-            const float makeUpGainLinear = juce::Decibels::decibelsToGain(makeUpGaindB);
-            outputChannelData[sample] = inputSample * finalGainLinear * makeUpGainLinear * mix + inputSample * (1.0f - mix);
+            outputChannelData[sample] = inputSample * currentGA_linear * makeUpGain_linear * mix + inputSample * (1.0f - mix);
         }
 
         // Store the final envelope value for the start of the next block
-        envelope[channel] = currentGA_dB;
+        envelope[channel] = currentGA_linear;
     }
     return outputBuffer;
 }

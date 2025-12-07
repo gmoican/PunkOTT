@@ -71,7 +71,7 @@ namespace Parameters
     // Lifter attack
     constexpr auto lifterAttackId = "lifterAttack";
     constexpr auto lifterAttackName = "Lifter Attack (ms)";
-    constexpr auto lifterAttackDefault = 15.0f;
+    constexpr auto lifterAttackDefault = 50.0f;
     constexpr auto lifterAttackMin = 1.0f;
     constexpr auto lifterAttackMax = 500.0f;
 

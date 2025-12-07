@@ -53,8 +53,8 @@ private:
     float kneedB = 6.0f;            // Knee width in dB
     float attackCoeff = 0.0f;       // Smoothing coefficient (Attack)
     float releaseCoeff = 0.0f;      // Smoothing coefficient (Release)
-    float makeUpGaindB = 0.0f;      // Compensation gain after the compression takes place
-    float currentGA_dB = 0.0f;      // Gain reduction (in dB) being applied currently
+    float makeUpGain_linear = 1.0f; // Compensation gain after the compression takes place
+    float currentGA_linear = 1.0f;  // Gain reduction being applied currently
     float mix = 1.0f;               // Mix (dry/wet)
 
     // --- Prevent copy and move ---

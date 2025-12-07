@@ -221,7 +221,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
 //==============================================================================
 void PunkOTTProcessor::updateParameters()
 {
-    // TODO: For final version, this function should only be called when parameters actually move -> APVTS::addParameterListener
     // --- 1. Utilities
     const float inLeveldB = apvts.getRawParameterValue(Parameters::inId)->load();
     inGain = juce::Decibels::decibelsToGain(inLeveldB);
@@ -240,13 +239,13 @@ void PunkOTTProcessor::updateParameters()
     const float rangedB = apvts.getRawParameterValue(Parameters::lifterThresId)->load();
     const float lifterAttackMS = apvts.getRawParameterValue(Parameters::lifterAttackId)->load();
     const float lifterReleaseMS = apvts.getRawParameterValue(Parameters::lifterReleaseId)->load();
-    const float lifterMakeUpGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -9.0f) : 0.0f;
+    const float lifterCompensationGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -12.0f) : 0.0f;
     
     lifter.updateMix(lifterMix);
     lifter.updateRange(rangedB);
     lifter.updateAttack(sampleRate, lifterAttackMS);
     lifter.updateRelease(sampleRate, lifterReleaseMS);
-    lifter.updateMakeUp(lifterMakeUpGain);
+    outGain = outGain * juce::Decibels::decibelsToGain(lifterCompensationGain);
     
     // Compressor updates
     const float compMix = apvts.getRawParameterValue(Parameters::compMixId)->load();
@@ -326,7 +325,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    // Update params - TODO: this has to be triggered by a listener in the final version
+    // Update params
     updateParameters();
     
     //GUI - Input level meters
