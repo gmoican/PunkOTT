@@ -230,20 +230,31 @@ void PluginEditor::resized()
     // --- INPUT METERS ---
     int numInputChannels = processorRef.getTotalNumInputChannels();
     
-    if (numInputChannels == 1)
+    if (numInputChannels == 1)  // Mono = Only left channel meter
     {
-        // Single input channel - meter takes full height
+        // Single input channel - meter takes full width
         if (inputLeftMeter)
+        {
+            inputLeftMeter->setVisible(true);
             inputLeftMeter->setBounds(sideLArea);
+        }
+        if (inputRightMeter)
+            inputRightMeter->setVisible(false);
     }
-    else if (numInputChannels > 1)
+    else if (numInputChannels > 1) // Stereo = Both channels meters
     {
-        // Stereo input - split height in half
+        // Stereo input - split width in half
         auto leftHalf = sideLArea.removeFromLeft(sideLArea.getWidth() / 2);
         if (inputLeftMeter)
+        {
+            inputLeftMeter->setVisible(true);
             inputLeftMeter->setBounds(leftHalf);
+        }
         if (inputRightMeter)
+        {
+            inputRightMeter->setVisible(true);
             inputRightMeter->setBounds(sideLArea);
+        }
     }
     
     // --- OUTPUT METERS ---
@@ -253,16 +264,27 @@ void PluginEditor::resized()
     {
         // Single output channel - meter takes full height
         if (outputLeftMeter)
+        {
+            outputLeftMeter->setVisible(true);
             outputLeftMeter->setBounds(sideRArea);
+        }
+        if (outputRightMeter)
+            outputRightMeter->setVisible(false);
     }
     else if (numOutputChannels > 1)
     {
         // Stereo output - split height in half
         auto leftHalf = sideRArea.removeFromLeft(sideRArea.getWidth() / 2);
         if (outputLeftMeter)
+        {
+            outputLeftMeter->setVisible(true);
             outputLeftMeter->setBounds(leftHalf);
+        }
         if (outputRightMeter)
+        {
+            outputRightMeter->setVisible(true);
             outputRightMeter->setBounds(sideRArea);
+        }
     }
     
     // --- FOOTER ---
