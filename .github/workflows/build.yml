@@ -97,9 +97,8 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         echo "Checking build directory structure..."
-        ls -la build/artefacts/Release/ || echo "Release directory not found"
-        ls -la build/artefacts/Release/VST3/ || echo "VST3 directory not found"
-        ls -la build/artefacts/Release/AU/ || echo "AU directory not found"
+        ls -la ./ || echo "Root directory..."
+        ls -la build/ || echo "Build directory..."
         echo "Full directory tree:"
         find build/artefacts -type f 2>/dev/null || echo "No artefacts directory found"
 
@@ -107,11 +106,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         echo "Checking build directory structure..."
-        dir build\artefacts\Release\ || echo "Release directory not found"
-        dir build\artefacts\Release\VST3\ || echo "VST3 directory not found"
-        dir build\artefacts\Release\Standalone\ || echo "Standalone directory not found"
-        echo "Full directory tree:"
-        tree build\artefacts || echo "No artefacts directory found"
+        Get-ChildItem -Recurse build || echo "No artefacts directory found"
     
     # Upload artifacts
     - name: Upload artifacts (macOS)
