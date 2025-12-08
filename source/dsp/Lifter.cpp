@@ -112,7 +112,7 @@ void Lifter::process_inplace(juce::AudioBuffer<float>& processedBuffer)
             float alpha = (targetGR > currentGA_linear) ? attackCoeff : releaseCoeff;
             
             currentGA_linear = (alpha * currentGA_linear) + ((1.0f - alpha) * targetGR);
-            currentGA_linear = juce::jlimit(0.0f, 10.0f, currentGA_linear);
+            currentGA_linear = juce::jlimit(0.0f, 15.0f, currentGA_linear);
             
             // 4. APPLY GAIN (in-place)
             channelData[sample] = inputSample * currentGA_linear * makeUpGain_linear * mix + inputSample * (1.0f - mix);
