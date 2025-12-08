@@ -99,9 +99,9 @@ jobs:
       with:
         name: ${{ env.PLUGIN_NAME }}-macOS
         path: |
-          build/*_artefacts/$BUILD_TYPE/VST3/*.vst3
-          build/*_artefacts/$BUILD_TYPE/AU/*.component
-          build/*_artefacts/$BUILD_TYPE/Standalone/*.app
+          build/artefacts/$BUILD_TYPE/VST3/*.vst3
+          build/artefacts/$BUILD_TYPE/AU/*.component
+          build/artefacts/$BUILD_TYPE/Standalone/*.app
 
     - name: Upload artifacts (Windows)
       if: runner.os == 'Windows'
@@ -109,8 +109,8 @@ jobs:
       with:
         name: ${{ env.PLUGIN_NAME }}-Windows
         path: |
-          build/*_artefacts/$BUILD_TYPE/VST3/*.vst3
-          build/*_artefacts/$BUILD_TYPE/Standalone/*.exe
+          build/artefacts/$BUILD_TYPE/VST3/*.vst3
+          build/artefacts/$BUILD_TYPE/Standalone/*.exe
 
   release:
     name: Create Release
