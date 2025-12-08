@@ -8,12 +8,17 @@ This is a VST3/AU OTT-style compressor plugin made with [JUCE](https://juce.com/
 
 --- THERE WILL BE A VIDEO LINK HERE WHEN THE DEMO IS READY ---
 
-The original OTT compressor was developed in Ableton Live's Multiband Dynamics and Xfer Records replicated this effect in a [free plugin](https://splice.com/plugins/3788-ott-vst-au-by-xfer-records). My plugin is simply a curious attempt to recreate this chain of processes and give it my own spin.
+The original OTT compressor was developed in Ableton Live's Multiband Dynamics and Xfer Records replicated this effect in a [free plugin](https://splice.com/plugins/3788-ott-vst-au-by-xfer-records). My plugin is simply a curious attempt to recreate this chain of processes with my own spin.
 
-## Work in progress
-This is plugin is still under development. Here are some things I want to achieve before I conclude this mini project:
-* **Multiplatform availability**:
-    * I am currently working on the `build.yml` file for building the plugin with GitHub Actions.
+## Actual state of this repository
+This plugin is in the final phases of development, I will soon consider it finished even though some aspects could be improved. Here are some details that could be looked after:
+* **DSP**:
+    * Investigating different compressor algorithms. I've implemented a feed-forward and feed-back processing in my `Compressor` processor. It can be a fun experiment to find new algorithms and experiment with the behaviour of the overall plugin.
+    * The same algorithms that have been applied in the compressor should be tested with the `Lifter` aswell.
+* **GUI**:
+    * Graphic design is not my passion and I don't like my GUI... It is the best I could do without overstraining myself...
+* **Documentation**:
+    * Documentation is boring, but I promise to write a detailed `Readme` one of these days...
 * **Extras**:
     * When this plugin is ready, I will surely write a multiband version of it.
     * I am very happy with the code structure I am implementing with this plugin (you may call me a noob, but I am happy with it hahaha). I am tempted to create a new repository to save my Lifter, Compressor, Gate and Clipper classes, as well as any tool that I develop in the future.

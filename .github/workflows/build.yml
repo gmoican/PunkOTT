@@ -92,20 +92,20 @@ jobs:
     #     name: validation-results-${{ matrix.name }}
     #     path: validation_results/
 
-    # List build artifacts
-    - name: List build artifacts (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        echo "Checking build directory structure..."
-        ls -la build/PunkOTT_artefacts/ || echo "Build directory..."
-        echo "Full directory tree:"
-        find build/artefacts -type f 2>/dev/null || echo "No artefacts directory found"
+    # # List build artifacts - I only use this to know where to look for the built plugin
+    # - name: List build artifacts (macOS)
+    #   if: runner.os == 'macOS'
+    #   run: |
+    #     echo "Checking build directory structure..."
+    #     ls -la build/PunkOTT_artefacts/ || echo "Build directory..."
+    #     echo "Full directory tree:"
+    #     find build/artefacts -type f 2>/dev/null || echo "No artefacts directory found"
 
-    - name: List build artifacts (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        echo "Checking build directory structure..."
-        Get-ChildItem -Recurse build || echo "No artefacts directory found"
+    # - name: List build artifacts (Windows)
+    #   if: runner.os == 'Windows'
+    #   run: |
+    #     echo "Checking build directory structure..."
+    #     Get-ChildItem -Recurse build || echo "No artefacts directory found"
     
     # Upload artifacts
     - name: Upload artifacts (macOS)
