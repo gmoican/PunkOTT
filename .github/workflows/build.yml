@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  project_name: PunkOTT
+  PLUGIN_NAME: PunkOTT
   BUILD_TYPE: Release
 
 # jobs are run in paralell on different machines
