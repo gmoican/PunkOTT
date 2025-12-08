@@ -26,11 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux
-            os: ubuntu-latest
-            pluginval-binary: ./pluginval
-            ccache: ccache
-            
           - name: macOS
             os: macos-latest
             pluginval-binary: pluginval.app/Contents/MacOS/pluginval
@@ -53,28 +48,6 @@ jobs:
         key: ${{ matrix.os }}-${{ matrix.ccache }}
         variant: ${{ matrix.ccache }}
 
-    - name: Install Linux dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libasound2-dev \
-          libjack-jackd2-dev \
-          ladspa-sdk \
-          libcurl4-openssl-dev \
-          libfreetype6-dev \
-          libx11-dev \
-          libxcomposite-dev \
-          libxcursor-dev \
-          libxcursor-dev \
-          libxext-dev \
-          libxinerama-dev \
-          libxrandr-dev \
-          libxrender-dev \
-          libwebkit2gtk-4.0-dev \
-          libglu1-mesa-dev \
-          mesa-common-dev
-
     - name: Setup MSVC (Windows)
       if: runner.os == 'Windows'
       uses: ilammy/msvc-dev-cmd@v1
@@ -88,13 +61,6 @@ jobs:
       run: cmake --build build --config $BUILD_TYPE --parallel 4
     
     # Download and setup pluginval
-    - name: Download pluginval (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        curl -L "https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_Linux.zip" -o pluginval.zip
-        unzip pluginval.zip
-        chmod +x pluginval
-
     - name: Download pluginval (macOS)
       if: runner.os == 'macOS'
       run: |
@@ -127,15 +93,6 @@ jobs:
         path: validation_results/
     
     # Upload artifacts
-    - name: Upload artifacts (Linux)
-      if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.PLUGIN_NAME }}-Linux
-        path: |
-          build/*_artefacts/$BUILD_TYPE/VST3/*.vst3
-          build/*_artefacts/$BUILD_TYPE/Standalone/*
-
     - name: Upload artifacts (macOS)
       if: runner.os == 'macOS'
       uses: actions/upload-artifact@v4
@@ -167,7 +124,6 @@ jobs:
       
     - name: Create zip files
       run: |
-        zip -r ${{ env.PLUGIN_NAME }}-Linux.zip ${{ env.PLUGIN_NAME }}-Linux
         zip -r ${{ env.PLUGIN_NAME }}-macOS.zip ${{ env.PLUGIN_NAME }}-macOS
         zip -r ${{ env.PLUGIN_NAME }}-Windows.zip ${{ env.PLUGIN_NAME }}-Windows
         
@@ -175,7 +131,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ${{ env.PLUGIN_NAME }}-Linux.zip
           ${{ env.PLUGIN_NAME }}-macOS.zip
           ${{ env.PLUGIN_NAME }}-Windows.zip
       env:

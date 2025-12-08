@@ -1,5 +1,5 @@
 #pragma once
-#include <PunkOTTProcessor.h>
+#include <PluginProcessor.h>
 
 /* This is a helper function to run tests within the context of a plugin editor.
  *
