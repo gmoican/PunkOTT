@@ -97,8 +97,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         echo "Checking build directory structure..."
-        ls -la ./ || echo "Root directory..."
-        ls -la build/ || echo "Build directory..."
+        ls -la build/PunkOTT_artefacts/ || echo "Build directory..."
         echo "Full directory tree:"
         find build/artefacts -type f 2>/dev/null || echo "No artefacts directory found"
 
@@ -115,8 +114,8 @@ jobs:
       with:
         name: ${{ env.PLUGIN_NAME }}-macOS
         path: |
-          build/artefacts/Release/VST3/*.vst3
-          build/artefacts/Release/AU/*.component
+          build/PunkOTT_artefacts/Release/VST3/*.vst3
+          build/PunkOTT_artefacts/Release/AU/*.component
 
     - name: Upload artifacts (Windows)
       if: runner.os == 'Windows'
@@ -124,7 +123,7 @@ jobs:
       with:
         name: ${{ env.PLUGIN_NAME }}-Windows
         path: |
-          build/artefacts/Release/VST3/*.vst3
+          build/PunkOTT_artefacts/Release/VST3/*.vst3
 
   release:
     name: Create Release
