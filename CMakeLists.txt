@@ -32,7 +32,7 @@ set(BUNDLE_ID "com.punkarra4.PunkOtt")
 
 # Change me! Set the plugin formats you want built
 # Valid choices: AAX Unity VST VST3 AU AUv3 Standalone
-set(FORMATS Standalone AU VST3 AUv3)
+set(FORMATS AU VST3 AUv3)
 
 # Force JUCE to work with sccache
 # instruct MSVC to embed debug info (/Z7) instead of emitting a .pdb

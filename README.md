@@ -1,5 +1,5 @@
 # PunkOTT
- [![PunkOTT](https://github.com/gmoican/PunkOTT/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/gmoican/PunkOTT/actions/workflows/build_and_test.yml)
+ [![PunkOTT](https://github.com/gmoican/PunkOTT/actions/workflows/build.yml/badge.svg)](https://github.com/gmoican/PunkOTT/actions/workflows/build.yml)
 
 ![DemoImage](docs/images/demo.png)
 
@@ -13,7 +13,7 @@ The original OTT compressor was developed in Ableton Live's Multiband Dynamics a
 ## Work in progress
 This is plugin is still under development. Here are some things I want to achieve before I conclude this mini project:
 * **Multiplatform availability**:
-    * When I finish with the previous requirements, I will work on the `build.yml` file for building the plugin with GitHub Actions.
+    * I am currently working on the `build.yml` file for building the plugin with GitHub Actions.
 * **Extras**:
     * When this plugin is ready, I will surely write a multiband version of it.
     * I am very happy with the code structure I am implementing with this plugin (you may call me a noob, but I am happy with it hahaha). I am tempted to create a new repository to save my Lifter, Compressor, Gate and Clipper classes, as well as any tool that I develop in the future.
