@@ -239,7 +239,7 @@ void PunkOTTProcessor::updateParameters()
     const float rangedB = apvts.getRawParameterValue(Parameters::lifterThresId)->load();
     const float lifterAttackMS = apvts.getRawParameterValue(Parameters::lifterAttackId)->load();
     const float lifterReleaseMS = apvts.getRawParameterValue(Parameters::lifterReleaseId)->load();
-    const float lifterCompensationGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -12.0f) : 0.0f;
+    const float lifterCompensationGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -8.0f) : 0.0f;
     
     lifter.updateMix(lifterMix);
     lifter.updateRange(rangedB);
