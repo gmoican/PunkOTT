@@ -160,7 +160,7 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 include(Tests)
 
 # A separate target for Benchmarks (keeps the Tests target fast)
-include(Benchmarks)
+# include(Benchmarks)
 
 # Output some config for CI (like our PRODUCT_NAME)
 include(GitHubENV)
