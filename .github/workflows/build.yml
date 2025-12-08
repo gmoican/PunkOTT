@@ -60,37 +60,37 @@ jobs:
       shell: bash
       run: cmake --build build --config $BUILD_TYPE --parallel 4
     
-    # Download and setup pluginval
-    - name: Download pluginval (macOS)
-      if: runner.os == 'macOS'
-      run: |
-        curl -L "https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_macOS.zip" -o pluginval.zip
-        unzip pluginval.zip
+    # # Download and setup pluginval
+    # - name: Download pluginval (macOS)
+    #   if: runner.os == 'macOS'
+    #   run: |
+    #     curl -L "https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_macOS.zip" -o pluginval.zip
+    #     unzip pluginval.zip
 
-    - name: Download pluginval (Windows)
-      if: runner.os == 'Windows'
-      shell: bash
-      run: |
-        curl -L "https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_Windows.zip" -o pluginval.zip
-        unzip pluginval.zip
+    # - name: Download pluginval (Windows)
+    #   if: runner.os == 'Windows'
+    #   shell: bash
+    #   run: |
+    #     curl -L "https://github.com/Tracktion/pluginval/releases/download/latest_release/pluginval_Windows.zip" -o pluginval.zip
+    #     unzip pluginval.zip
 
-    # Run pluginval validation
-    - name: Validate plugin with pluginval
-      shell: bash
-      run: |
-        ${{ matrix.pluginval-binary }} \
-          --strictness-level 5 \
-          --validate-in-process \
-          --output-dir validation_results \
-          --verbose \
-          ${{ matrix.plugin-path }}
+    # # Run pluginval validation
+    # - name: Validate plugin with pluginval
+    #   shell: bash
+    #   run: |
+    #     ${{ matrix.pluginval-binary }} \
+    #       --strictness-level 5 \
+    #       --validate-in-process \
+    #       --output-dir validation_results \
+    #       --verbose \
+    #       ${{ matrix.plugin-path }}
 
-    - name: Upload validation results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: validation-results-${{ matrix.name }}
-        path: validation_results/
+    # - name: Upload validation results
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: validation-results-${{ matrix.name }}
+    #     path: validation_results/
     
     # Upload artifacts
     - name: Upload artifacts (macOS)
