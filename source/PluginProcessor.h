@@ -25,6 +25,11 @@ namespace Parameters
     constexpr auto gateMin = -90.0f;
     constexpr auto gateMax = 0.0f;
 
+    // Clipper: Applies a soft-clipping function after the dynamics processing
+    constexpr auto clipperId = "clipper";
+    constexpr auto clipperName = "Clipper";
+    constexpr auto clipperDefault = false;
+
     constexpr auto outId = "out_gain";
     constexpr auto outName = "Output Gain (dB)";
     constexpr auto outDefault = 0.f;
@@ -88,11 +93,6 @@ namespace Parameters
     constexpr auto lifterMixDefault = 100.f;
     constexpr auto lifterMixMin = 0.0f;
     constexpr auto lifterMixMax = 100.0f;
-
-    // Clipper: Applies a soft-clipping function after the dynamics processing
-    constexpr auto clipperId = "clipper";
-    constexpr auto clipperName = "Clipper";
-    constexpr auto clipperDefault = false;
 }
 
 // GUI Level Meters
@@ -153,13 +153,12 @@ private:
     float inGain = 1.0f;
     float outGain = 1.0f;
     Gate gate;
+    Clipper clipper;
+    bool clipperState = false;
     
     // --- OTT PROCESSORS ---
     Lifter lifter;
     Compressor compressor, masterLimiter;
-    
-    Clipper clipper;
-    bool clipperState = false;
     
     // =============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PunkOTTProcessor)

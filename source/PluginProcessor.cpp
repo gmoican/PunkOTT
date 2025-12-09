@@ -113,6 +113,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                                                                      )
                          );
     
+    // Clipper
+    utilsGroup->addChild(std::make_unique<juce::AudioParameterBool>(Parameters::clipperId,
+                                                                    Parameters::clipperName,
+                                                                    Parameters::clipperDefault
+                                                                    )
+                         );
+    
     // Output Level
     utilsGroup->addChild(std::make_unique<juce::AudioParameterFloat>(
                                                                      Parameters::outId,
@@ -206,13 +213,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout PunkOTTProcessor::createPara
                                                                      )
                          );
     
-    // Clipper
-    dynGroup->addChild(std::make_unique<juce::AudioParameterBool>(Parameters::clipperId,
-                                                                 Parameters::clipperName,
-                                                                 Parameters::clipperDefault
-                                                                 )
-                       );
-    
     layout.add(std::move(dynGroup));
     
     return layout;
@@ -228,6 +228,8 @@ void PunkOTTProcessor::updateParameters()
     const float gatedB = apvts.getRawParameterValue(Parameters::gateId)->load();
     gate.updateThres(gatedB);
     
+    clipperState = (bool) apvts.getRawParameterValue(Parameters::clipperId)->load();
+    
     const float outdB = apvts.getRawParameterValue(Parameters::outId)->load();
     outGain = juce::Decibels::decibelsToGain(outdB);
     
@@ -239,13 +241,14 @@ void PunkOTTProcessor::updateParameters()
     const float rangedB = apvts.getRawParameterValue(Parameters::lifterThresId)->load();
     const float lifterAttackMS = apvts.getRawParameterValue(Parameters::lifterAttackId)->load();
     const float lifterReleaseMS = apvts.getRawParameterValue(Parameters::lifterReleaseId)->load();
-    const float lifterCompensationGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -8.0f) : 0.0f;
+    float lifterCompensationGain = (rangedB > -40.0f) ? juce::jmap(rangedB, -40.0f, 0.0f, 0.0f, -8.0f) : 0.0f;
+    lifterCompensationGain = juce::Decibels::decibelsToGain(lifterCompensationGain);
     
     lifter.updateMix(lifterMix);
     lifter.updateRange(rangedB);
     lifter.updateAttack(sampleRate, lifterAttackMS);
     lifter.updateRelease(sampleRate, lifterReleaseMS);
-    outGain = outGain * juce::Decibels::decibelsToGain(lifterCompensationGain);
+    outGain = outGain * (lifterCompensationGain * lifterMix / 100.f + (1.f - lifterMix / 100.f));
     
     // Compressor updates
     const float compMix = apvts.getRawParameterValue(Parameters::compMixId)->load();
@@ -257,8 +260,6 @@ void PunkOTTProcessor::updateParameters()
     compressor.updateThres(thresdB);
     compressor.updateAttack(sampleRate, compAttackMS);
     compressor.updateRelease(sampleRate, compReleaseMS);
-    
-    clipperState = (bool) apvts.getRawParameterValue(Parameters::clipperId)->load();
 }
 
 void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -270,11 +271,11 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gate.updateRelease((float) sampleRate, 30.f);
     
     masterLimiter.prepare(sampleRate, samplesPerBlock);
-    masterLimiter.updateThres(-6.f);
-    masterLimiter.updateKnee(3.0f);
-    masterLimiter.updateRatio(100.0f);
-    masterLimiter.updateAttack((float) sampleRate, 1.0f);
-    masterLimiter.updateRelease((float) sampleRate, 50.0f);
+    masterLimiter.updateThres(-3.f);
+    masterLimiter.updateKnee(1.0f);
+    masterLimiter.updateRatio(20.0f);
+    masterLimiter.updateAttack((float) sampleRate, 30.0f);
+    masterLimiter.updateRelease((float) sampleRate, 100.0f);
     
     lifter.prepare(sampleRate, samplesPerBlock);
     lifter.updateRatio(6.f);
@@ -334,7 +335,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     if (totalNumInputChannels > 1)
         levelMeters.rmsInputRight.store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(1, 0, buffer.getNumSamples())));
     
-    // 1. UTILITIES - PRE-OTT
+    // 1. UTILITIES - INPUT GAIN & GATE
     buffer.applyGain(inGain);
     gate.process(buffer);
     
@@ -347,12 +348,12 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // 2. OTT - Safe limiter
     masterLimiter.processFF_inplace(buffer);
     
-    // 2. OTT - Clipper
+    // 3. UTILITIES - Clipper
     if (clipperState) {
         clipper.applyTanhClipper(buffer, 1.7f);
     }
     
-    // 3. UTILITIES - POST-OTT    
+    // 3. UTILITIES - OUTPUT GAIN
     buffer.applyGain(outGain);
     
     // GUI - Output level meters
