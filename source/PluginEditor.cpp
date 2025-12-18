@@ -8,12 +8,16 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     juce::LookAndFeel::setDefaultLookAndFeel(&myCustomLnF);
     
     // --- LAYOUT ---
-    header.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.5f));
+    header.setColour (juce::TextButton::buttonColourId, UIColors::container.darker(0.5f)
+                                                                           .withAlpha(0.25f)
+                      );
     header.setEnabled(false);
     // header.setButtonText ("Header");
     addAndMakeVisible (header);
     
-    footer.setColour (juce::TextButton::buttonColourId, UIColors::container.withAlpha(0.5f));
+    footer.setColour (juce::TextButton::buttonColourId, UIColors::container.darker(0.5f)
+                                                                           .withAlpha(0.25f)
+                      );
     footer.setEnabled(false);
     // footer.setButtonText ("Footer");
     addAndMakeVisible (footer);
@@ -194,9 +198,9 @@ PluginEditor::PluginEditor (PunkOTTProcessor& p)
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setResizable(true, true);
-    getConstrainer()->setFixedAspectRatio(1.2683);
-    setResizeLimits(520, 410, 1040, 820);
-    setSize (520, 410);
+    getConstrainer()->setFixedAspectRatio(1.55);
+    setResizeLimits(650, 420, 780, 600);
+    setSize (650, 420);
 }
 
 PluginEditor::~PluginEditor()
@@ -216,10 +220,10 @@ void PluginEditor::resized()
     auto area = getLocalBounds();
     
     // --- LAYOUT SETUP ---
-    auto headerArea = area.removeFromTop((int)(area.getHeight() * 0.12f));
-    auto sideLArea = area.removeFromLeft((int)(area.getWidth() * 0.12f));
-    auto sideRArea = area.removeFromRight((int)(area.getWidth() * 0.12f));
-    auto footerArea = area.removeFromBottom(30);
+    auto headerArea = area.removeFromTop( 50 );
+    auto sideLArea = area.removeFromLeft( 50 );
+    auto sideRArea = area.removeFromRight( 50 );
+    auto footerArea = area.removeFromBottom( 30 );
     
     header.setBounds(headerArea);
     footer.setBounds(footerArea);
@@ -307,8 +311,8 @@ void PluginEditor::resized()
     auto topArea = area.removeFromTop(contentItemHeight);
     
     // Split the top area in half horizontally
-    auto lifterArea = topArea.removeFromLeft(topArea.getWidth() / 2).reduced(5);
-    auto compArea = topArea.reduced(5);
+    auto lifterArea = topArea.removeFromLeft(topArea.getWidth() / 2).reduced(10);
+    auto compArea = topArea.reduced(10);
     
     lifterContainer.setBounds (lifterArea);
     compContainer.setBounds (compArea);
@@ -324,18 +328,18 @@ void PluginEditor::resized()
     // Split each row into left and right columns
     auto sliderWidth = topRow.getWidth() / 2;
     
-    lifterRangeSlider.setBounds(topRow.removeFromLeft(sliderWidth));
-    lifterMixSlider.setBounds(topRow.removeFromLeft(sliderWidth));
-    lifterAttackSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
-    lifterReleaseSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
+    lifterRangeSlider.setBounds(topRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
+    lifterMixSlider.setBounds(topRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
+    lifterAttackSlider.setBounds(bottomRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
+    lifterReleaseSlider.setBounds(bottomRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
     
     // Position sliders inside comp container
     // Split into top and bottom rows
     topRow = compSliderArea.removeFromTop(compSliderArea.getHeight() / 2);
     bottomRow = compSliderArea;
     
-    compThresSlider.setBounds(topRow.removeFromLeft(sliderWidth));
-    compMixSlider.setBounds(topRow.removeFromLeft(sliderWidth));
-    compAttackSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
-    compReleaseSlider.setBounds(bottomRow.removeFromLeft(sliderWidth));
+    compThresSlider.setBounds(topRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
+    compMixSlider.setBounds(topRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
+    compAttackSlider.setBounds(bottomRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
+    compReleaseSlider.setBounds(bottomRow.removeFromLeft(sliderWidth).reduced( (int) sliderWidth * 0.05) );
 }
