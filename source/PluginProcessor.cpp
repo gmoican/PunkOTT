@@ -343,10 +343,10 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     lifter.process_inplace(buffer);
     
     // 2. OTT - Comp
-    compressor.processFF_inplace(buffer);
+    compressor.process(buffer, false);
     
     // 2. OTT - Safe limiter
-    masterLimiter.processFF_inplace(buffer);
+    masterLimiter.process(buffer, true);
     
     // 3. UTILITIES - Clipper
     if (clipperState) {
