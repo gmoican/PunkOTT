@@ -269,6 +269,7 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gate.prepare(sampleRate, samplesPerBlock);
     gate.updateAttack((float) sampleRate, 100.f);
     gate.updateRelease((float) sampleRate, 30.f);
+    gate.updateMix(80.f);
     
     masterLimiter.prepare(sampleRate, samplesPerBlock);
     masterLimiter.updateThres(-3.f);
@@ -281,6 +282,8 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     lifter.updateRatio(6.f);
     compressor.prepare(sampleRate, samplesPerBlock);
     compressor.updateRatio(8.f);
+    
+    clipper.setGainFactor(1.7f);
     
     updateParameters();
 }
@@ -340,7 +343,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     gate.process(buffer);
     
     // 2. OTT - Lifter
-    lifter.process_inplace(buffer);
+    lifter.process(buffer, false);
     
     // 2. OTT - Comp
     compressor.process(buffer, false);
@@ -350,7 +353,7 @@ void PunkOTTProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     
     // 3. UTILITIES - Clipper
     if (clipperState) {
-        clipper.applyTanhClipper(buffer, 1.7f);
+        clipper.applyTanhClipper(buffer);
     }
     
     // 3. UTILITIES - OUTPUT GAIN
