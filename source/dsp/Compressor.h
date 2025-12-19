@@ -51,14 +51,14 @@ private:
     float attackCoeff = 0.0f;       // Smoothing coefficient (Attack)
     float releaseCoeff = 0.0f;      // Smoothing coefficient (Release)
     float makeUpGaindB = 0.0f;      // Compensation gain after the compression takes place
-    float currentGR_dB = 0.0f;      // Gain reduction (in dB) being applied currently
     float mix = 1.0f;               // Mix (dry/wet)
     
     // Other params
     float compressionSlope = 1.0f - (1.0f / ratio);
     float kneeStart = thresdB - (kneedB / 2.0f);
     float kneeEnd = thresdB + (kneedB / 2.0f);
-
+    float currentGR_dB = 0.0f;      // Gain reduction (in dB) being applied currently
+    
     // --- Prevent copy and move ---
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Compressor)
 };

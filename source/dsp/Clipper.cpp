@@ -4,13 +4,24 @@ Clipper::Clipper()
 {
 }
 
+// --- --- PARAMETER UPDATES --- --
+void Clipper::setGainFactor(float newGain)
+{
+    gainFactor = newGain;
+}
+
+void Clipper::setParamFactor(float newParam)
+{
+    param = newParam;
+}
+
 // --- --- SAMPLE PROCESSING --- ---
-float Clipper::applySoftClipper(float sample, float gainFactor)
+float Clipper::applySoftClipper(float sample)
 {
     return gainFactor * sample / (std::abs(sample) + 1.0f);
 }
 
-float Clipper::applyHardClipper(float sample, float gainFactor)
+float Clipper::applyHardClipper(float sample)
 {
     if (sample > 1.0f)
         return gainFactor * 2.0f / 3.0f;
@@ -20,82 +31,65 @@ float Clipper::applyHardClipper(float sample, float gainFactor)
         return gainFactor * (sample - std::pow(sample, 3.0f) / 3.0f);
 }
 
-float Clipper::applyTanhClipper(float sample, float gainFactor)
+float Clipper::applyTanhClipper(float sample)
 {
     return gainFactor * 2.0f / juce::MathConstants<float>::pi * juce::dsp::FastMathApproximations::tanh(sample);
 }
 
-float Clipper::applyATanClipper(float sample, float gainFactor)
+float Clipper::applyATanClipper(float sample)
 {
     return gainFactor * 2.0f / juce::MathConstants<float>::pi * std::atan(sample);
 }
 
 // --- --- BUFFER PROCESSING --- ---
-void Clipper::applySoftClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor)
+void Clipper::applySoftClipper(juce::AudioBuffer<float>& inputBuffer)
 {
-    const int numSamples = processedBuffer.getNumSamples();
-    const int numChannels = processedBuffer.getNumChannels();
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
-        float* channelData = processedBuffer.getWritePointer(channel);
+        float* channelData = inputBuffer.getWritePointer(channel);
         for (int sample = 0; sample < numSamples; ++sample)
-        {
-            float x = channelData[sample];
-            channelData[sample] = gainFactor * x / (abs(x) + 1.0f);
-        }
+            channelData[sample] = applySoftClipper(channelData[sample]);
     }
 }
 
-void Clipper::applyHardClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor)
+void Clipper::applyHardClipper(juce::AudioBuffer<float>& inputBuffer)
 {
-    const int numSamples = processedBuffer.getNumSamples();
-    const int numChannels = processedBuffer.getNumChannels();
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
-        float* channelData = processedBuffer.getWritePointer(channel);
+        float* channelData = inputBuffer.getWritePointer(channel);
         for (int sample = 0; sample < numSamples; ++sample)
-        {
-            float x = channelData[sample];
-            if (x > 1.0f)
-                channelData[sample] = gainFactor * 2.0f / 3.0f;
-            else if (x < -1.0f)
-                channelData[sample] = gainFactor * -2.0f / 3.0f;
-            else
-                channelData[sample] = gainFactor * (x - std::pow(x, 3.0f) / 3.0f);
-        }
+            channelData[sample] = applyHardClipper(channelData[sample]);
     }
 }
 
-void Clipper::applyTanhClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor)
+void Clipper::applyTanhClipper(juce::AudioBuffer<float>& inputBuffer)
 {
-    const int numSamples = processedBuffer.getNumSamples();
-    const int numChannels = processedBuffer.getNumChannels();
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
-        float* channelData = processedBuffer.getWritePointer(channel);
+        float* channelData = inputBuffer.getWritePointer(channel);
         for (int sample = 0; sample < numSamples; ++sample)
-        {
-            float x = channelData[sample];
-            channelData[sample] = gainFactor * 2.0f / juce::MathConstants<float>::pi * juce::dsp::FastMathApproximations::tanh(x);
-        }
+            channelData[sample] = applyTanhClipper(channelData[sample]);
     }
 }
 
-void Clipper::applyATanClipper(juce::AudioBuffer<float>& processedBuffer, float gainFactor)
+void Clipper::applyATanClipper(juce::AudioBuffer<float>& inputBuffer)
 {
-    const int numSamples = processedBuffer.getNumSamples();
-    const int numChannels = processedBuffer.getNumChannels();
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
 
     for (int channel = 0; channel < numChannels; ++channel)
     {
-        float* channelData = processedBuffer.getWritePointer(channel);
+        float* channelData = inputBuffer.getWritePointer(channel);
         for (int sample = 0; sample < numSamples; ++sample)
-        {
-            float x = channelData[sample];
-            channelData[sample] = gainFactor * 2.0f / juce::MathConstants<float>::pi * std::atan(x);
-        }
+            channelData[sample] = applyATanClipper(channelData[sample]);
     }
 }

@@ -28,11 +28,19 @@ void Gate::updateRatio(float newRatio)
 void Gate::updateThres(float newThres)
 {
     thresdB = newThres;
+    updateKneeRange();
 }
 
 void Gate::updateKnee(float newKnee)
 {
     kneedB = newKnee;
+    updateKneeRange();
+}
+
+void Gate::updateKneeRange()
+{
+    kneeStart = thresdB - (kneedB / 2.0f);
+    kneeEnd = thresdB + (kneedB / 2.0f);
 }
 
 void Gate::updateAttack(float sampleRate, float newAttMs)
@@ -45,17 +53,48 @@ void Gate::updateRelease(float sampleRate, float newRelMs)
     releaseCoeff = calculateTimeCoeff(sampleRate, newRelMs);
 }
 
-void Gate::process(juce::AudioBuffer<float>& processedBuffer)
+void Gate::updateMix(float newMix)
 {
-    const int numSamples = processedBuffer.getNumSamples();
-    const int numChannels = processedBuffer.getNumChannels();
+    mix = newMix / 100.0f;
+}
 
-    // --- Pre-calculations ---
-    // Calculate the slope for gain reduction
-    const float expansionSlope = ratio - 1.0f;
-    const float kneeStart = thresdB - (kneedB / 2.0f);
-    const float kneeEnd = thresdB + (kneedB / 2.0f);
+// --- Core Math Logic ---
 
+float Gate::calculateTargetGain(float input_dB)
+{
+    if (input_dB < kneeStart)
+        return (input_dB - thresdB) * expansionSlope;
+    if (input_dB < kneeEnd)
+    {
+        const float x = input_dB - kneeEnd;
+        return expansionSlope / (2.0f * kneedB) * (x * x);
+    }
+    
+    return 0.0f;
+}
+
+float Gate::updateEnvelope(float targetGR_dB, float currentEnv_dB)
+{
+    // If target reduction is greater than current (Attack), or less (Release)
+    float alpha = (-targetGR_dB > -currentGR_dB) ? attackCoeff : releaseCoeff;
+    
+    // Exponential smoothing: y[n] = a * y[n-1] + (1-a) * x[n]
+    float smoothedReductionAmount = (alpha * -currentGR_dB) + ((1.0f - alpha) * -targetGR_dB);
+    return -smoothedReductionAmount;
+}
+
+// --- Methods for GUI ---
+float Gate::getGainReduction()
+{
+    return currentGR_dB;
+}
+
+// --- PROCESS ---
+void Gate::process(juce::AudioBuffer<float>& inputBuffer)
+{
+    const int numSamples = inputBuffer.getNumSamples();
+    const int numChannels = inputBuffer.getNumChannels();
+    
     // Ensure envelope vector is correctly sized (safety)
     if ((int)envelope.size() != numChannels)
         envelope.assign(numChannels, 1.0f);
@@ -63,8 +102,8 @@ void Gate::process(juce::AudioBuffer<float>& processedBuffer)
     for (int channel = 0; channel < numChannels; ++channel)
     {
         // Pointers for reading input and writing wet output
-        float* channelData = processedBuffer.getWritePointer(channel);
-        float currentGR_dB = envelope[channel];
+        float* channelData = inputBuffer.getWritePointer(channel);
+        currentGR_dB = envelope[channel];
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -77,32 +116,14 @@ void Gate::process(juce::AudioBuffer<float>& processedBuffer)
             // 1. SIDECHAIN: Convert magnitude to dB
             const float inputDB = juce::Decibels::gainToDecibels(magnitude);
 
-            // 2. TARGET GAIN REDUCTION (in dB)
-            // Hard Knee Equation
-            // float targetGR_dB = (inputDB < thresdB) ? (inputDB - thresdB) * compressionSlope : 0.0f;
-            
-            // Soft Knee Equation
-            float targetGR_dB = 0.0f;
-            if (inputDB < kneeStart)
-            {
-                targetGR_dB = (inputDB - thresdB) * expansionSlope;
-            }
-            else if (inputDB < kneeEnd)
-            {
-                const float x = inputDB - kneeEnd;
-                targetGR_dB = expansionSlope / (2.0f * kneedB) * (x * x);
-            }
-            
-            // 3. ENVELOPE SMOOTHING (in dB)
-            float alpha = (-targetGR_dB > -currentGR_dB) ? attackCoeff : releaseCoeff;
-            
-            const float smoothedReductionAmount = (alpha * -currentGR_dB) + ((1.0f - alpha) * -targetGR_dB);
-            
-            currentGR_dB = -smoothedReductionAmount;
+            // 2. Gain Computer & Ballistics
+            float targetGR_dB = calculateTargetGain(inputDB);
+            currentGR_dB = updateEnvelope(targetGR_dB, currentGR_dB);
             
             // 4. APPLY GAIN (in-place)
             const float gainReductionLinear = juce::Decibels::decibelsToGain(currentGR_dB);
-            channelData[sample] = inputSample * gainReductionLinear;
+            float processed = inputSample * gainReductionLinear;
+            channelData[sample] = (processed * mix) + (inputSample * (1.0f - mix));
         }
         
         // Store the final envelope value for the start of the next block

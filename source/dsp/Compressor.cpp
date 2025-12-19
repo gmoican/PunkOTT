@@ -111,7 +111,7 @@ void Compressor::process(juce::AudioBuffer<float>& inputBuffer, bool useFeedForw
     for (int ch = 0; ch < numChannels; ++ch)
     {
         float* channelData = inputBuffer.getWritePointer(ch);
-        float currentEnv = envelope[ch];
+        currentGR_dB = envelope[ch];
         
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -123,7 +123,7 @@ void Compressor::process(juce::AudioBuffer<float>& inputBuffer, bool useFeedForw
             if (!useFeedForward)
             {
                 // Feed-back uses the PREVIOUS output (estimated by current envelope)
-                float prevGain = juce::Decibels::decibelsToGain(currentEnv + makeUpGaindB);
+                float prevGain = juce::Decibels::decibelsToGain(currentGR_dB + makeUpGaindB);
                 sidechainInput = input * prevGain;
             }
             
@@ -133,18 +133,16 @@ void Compressor::process(juce::AudioBuffer<float>& inputBuffer, bool useFeedForw
             
             // 3. Gain Computer & Ballistics
             float targetGR = calculateTargetGain(inputDB);
-            currentEnv = updateEnvelope(targetGR, currentEnv);
+            currentGR_dB = updateEnvelope(targetGR, currentGR_dB);
             
             // 4. Apply Gain
-            float totalGainDB = currentEnv + makeUpGaindB;
+            float totalGainDB = currentGR_dB + makeUpGaindB;
             float gainLinear = juce::Decibels::decibelsToGain(totalGainDB);
             
             float processed = input * gainLinear;
             channelData[sample] = (processed * mix) + (input * (1.0f - mix));
         }
         
-        envelope[ch] = currentEnv;
-        // Optional: for meter reporting
-        if (ch == 0) currentGR_dB = currentEnv;
+        envelope[ch] = currentGR_dB;
     }
 }
