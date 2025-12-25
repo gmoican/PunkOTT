@@ -87,7 +87,7 @@ jobs:
 
     # - name: Upload validation results
     #   if: always()
-    #   uses: actions/upload-artifact@v4
+    #   uses: actions/upload-artifact@v6
     #   with:
     #     name: validation-results-${{ matrix.name }}
     #     path: validation_results/
@@ -110,7 +110,7 @@ jobs:
     # Upload artifacts
     - name: Upload artifacts (macOS)
       if: runner.os == 'macOS'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ env.PLUGIN_NAME }}-macOS
         path: |
@@ -119,7 +119,7 @@ jobs:
 
     - name: Upload artifacts (Windows)
       if: runner.os == 'Windows'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ${{ env.PLUGIN_NAME }}-Windows
         path: |
