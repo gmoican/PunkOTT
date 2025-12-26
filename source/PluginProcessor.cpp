@@ -269,7 +269,7 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     gate.prepare(sampleRate, samplesPerBlock);
     gate.updateAttack((float) sampleRate, 100.f);
     gate.updateRelease((float) sampleRate, 30.f);
-    gate.updateMix(80.f);
+    gate.updateMix(90.f);
     
     masterLimiter.prepare(sampleRate, samplesPerBlock);
     masterLimiter.updateThres(-3.f);
