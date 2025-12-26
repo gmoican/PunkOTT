@@ -6,25 +6,64 @@
 ## Introduction
 This is a VST3/AU OTT-style compressor plugin made with [JUCE](https://juce.com/). OTT stands for Over-The-Top, it is a very aggressive dynamic effect that combines upward compression (raises the level of quieter sounds, making them louder) and downward compression (lowers the level of louder sounds, limiting the peaks). This combination results in a dense, loud and harmonically rich sound; check the demo below to hear some practical examples.
 
---- THERE WILL BE A VIDEO LINK HERE WHEN THE DEMO IS READY ---
+**--- THERE WILL BE A VIDEO LINK HERE WHEN THE DEMO IS READY ---**
 
 The original OTT compressor was developed in Ableton Live's Multiband Dynamics and Xfer Records replicated this effect in a [free plugin](https://splice.com/plugins/3788-ott-vst-au-by-xfer-records). My plugin is simply a curious attempt to recreate this chain of processes with my own spin.
 
+This repository contains the single-band implementation of this effect. Check [this repo](https://github.com/gmoican/PunkOTT-MB/) for the multi-band implementation.
+
 ## Actual state of this repository
-This plugin is in the final phases of development, I will soon consider it finished even though some aspects could be improved. Here are some details that could be looked after:
+For the time being, I consider this project to be finished. I recognize that some aspects could be improved or customized for a more niche effect, but I prefer to learn more about other topics and come back to this in a distant future.
+
+If you want to mess with the code and work on top of my plugin, here are some details that could be looked after:
 * **DSP**:
-    * Investigating different compressor algorithms. I've implemented a feed-forward and feed-back processing in my `Compressor` processor. It can be a fun experiment to find new algorithms and experiment with the behaviour of the overall plugin.
-    * The same algorithms that have been applied in the compressor should be tested with the `Lifter` aswell.
+    * Investigating different compressor algorithms. I've implemented a feed-forward and feed-back processing in my `Compressor` and `Lifter` processor. It can be a fun experiment to find new algorithms and experiment with the behaviour of the overall plugin.
+    * The `Lifter` tends to increase the volume a lot. The plugin uses a limiter in the end of the chain for safety purposes and a clipper that the user can turn on/off.
 * **GUI**:
     * Graphic design is not my passion and I don't like my GUI... It is the best I could do without overstraining myself...
-* **Documentation**:
-    * Documentation is boring, but I promise to write a detailed `Readme` one of these days...
 * **Extras**:
-    * When this plugin is ready, I will surely write a multiband version of it.
-    * I am very happy with the code structure I am implementing with this plugin (you may call me a noob, but I am happy with it hahaha). I am tempted to create a new repository to save my Lifter, Compressor, Gate and Clipper classes, as well as any tool that I develop in the future.
+    * I should implement a `PresetManager`...
+    * There are some details noted in the [Inner Processing](#inner-processing) that could be looked after for further customization.
+* **Documentation**:
+    * Check out my [punk_dsp repo](https://github.com/gmoican/punk_dsp/) for detailed documentation about my `Compressor`, `Lifter`, `Gate` and `Waveshaper` implementations. Documentation is boring so I procastinate a little in that matter, but I promise to get it done and nicely presented one of these days... 
 
 ## Inner Processing
-I will update this section with a diagram of the DSP one of this days... But there is one important thing to know from this plugin: it **squashes** and **destroys** your signal. Take a look at the following pictures to see how dynamics can be easily messed up.
+The signal flow is as follows:
+1. Input Gain:
+    - From -24 to +24dB.
+2. Noise Gate:
+    - Threshold: from -90dB to 0dB.
+    - Ratio: 6:1.
+    - Attack: 100ms.
+    - Release: 30ms.
+    - Mix: 90% _(if it is set to 100% the gate is very hard)_.
+3. Lifter:
+    - Threshold: from -80dB to 0dB.
+        - When the threshold goes beyond -40dB, there is a gain compensation in the output to compensate for the crazy volume increase that the `Lifter` may produce.
+        - *IDEA*: Allow the gain compensation to be turned on/off. If the output volume goes off the rails, the user can use a different compressor/limiter plugin to tame the output signal.
+    - Ratio: 6:1.
+    - Attack: from 1ms to 500ms.
+    - Release: from 10ms to 2500ms.
+    - Mix: from 0% to 100%.
+4. Compressor:
+    - Threshold: from -24dB to 0dB.
+    - Ratio: 8:1.
+    - Attack: from 0.1ms to 250ms.
+    - Release: from 10ms to 2500ms.
+    - Mix: from 0% to 100%.
+5. Limiter _(hard-coded for safety measures, the `Lifter` can easily produce pops in your signal so this limiter aims to prevent these spikes)_:
+    - Threshold: -3dB.
+    - Ratio: 20:1.
+    - Attack: 30ms.
+    - Release: 100ms.
+    - Mix: 100%.
+6. Clipper:
+    - Applies an _TanH_ waveshaping function.
+    - By default, it is turned on for the same reason as the `Limiter`. If you have another clipper plugin that you particularly like, I suggest you turn off my built-in clipper and use yours instead.
+7. Output Gain:
+    - From -24 to +24dB.
+
+There is one important thing to know about this plugin: it **squashes** and **destroys** your signal. Take a look at the following pictures to see how dynamics can be easily messed up.
 
 Lifter squash             |  Lifter + Comp squash
 :-------------------------:|:-------------------------:
