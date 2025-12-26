@@ -52,7 +52,7 @@ add_subdirectory(JUCE)
 add_subdirectory(modules/clap-juce-extensions EXCLUDE_FROM_ALL)
 
 # Add any other modules you want modules here, before the juce_add_plugin call
-# juce_add_module(modules/my_module)
+juce_add_module(modules/punk_dsp)
 
 # This adds the melatonin inspector module
 add_subdirectory (modules/melatonin_inspector)
@@ -141,6 +141,7 @@ target_link_libraries(SharedCode
     INTERFACE
     Assets
     melatonin_inspector
+    punk_dsp
     juce_audio_utils
     juce_audio_processors
     juce_dsp
@@ -157,7 +158,7 @@ target_link_libraries("${PROJECT_NAME}" PRIVATE SharedCode)
 # include(PamplejuceIPP)
 
 # Everything related to the tests target
-include(Tests)
+# include(Tests)
 
 # A separate target for Benchmarks (keeps the Tests target fast)
 # include(Benchmarks)

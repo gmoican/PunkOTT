@@ -14,3 +14,7 @@
 	path = modules/clap-juce-extensions
 	url = https://github.com/free-audio/clap-juce-extensions.git
 	branch = main
+[submodule "modules/punk_dsp"]
+	path = modules/punk_dsp
+	url = https://github.com/gmoican/punk_dsp.git
+	branch = main
