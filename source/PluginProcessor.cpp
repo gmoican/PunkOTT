@@ -282,7 +282,7 @@ void PunkOTTProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     compressor.prepare(spec);
     compressor.updateRatio(8.f);
     
-    clipper.setGainFactor(1.7f);
+    clipper.setOutGain(1.7f);
     
     updateParameters();
 }
